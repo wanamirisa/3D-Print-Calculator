@@ -1,0 +1,1317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D Print Calculator</title>
+  
+  <!-- Tailwind CSS for styling (Using the script for local development) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Custom print overriding CSS -->
+  <style>
+    @media print {
+      /* Hide all interactive elements */
+      #calculator-app, #invoice-modal-backdrop, #profiles-modal-backdrop, #settings-modal-backdrop, .modal-control-buttons {
+        display: none !important;
+      }
+      /* Clean white background and show only printable invoice */
+      body {
+        background-color: white !important;
+        color: #0f172a !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      #invoice-print-area {
+        display: block !important;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100% !important;
+        padding: 2rem !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-100 text-slate-900 p-4 md:p-6 font-sans pb-20">
+
+  <!-- Interactive Application Wrapper -->
+  <div id="calculator-app" class="max-w-7xl mx-auto space-y-6">
+    
+    <!-- Header -->
+    <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+      <div>
+        <div class="flex items-center gap-3 mb-1">
+          <div class="p-2.5 bg-blue-600 text-white rounded-xl shadow-sm">
+            <i data-lucide="printer" class="w-6 h-6"></i>
+          </div>
+          <h1 class="text-2xl font-bold tracking-tight text-slate-800">3D Print Calculator</h1>
+        </div>
+        <div class="flex items-center gap-2 mt-2 ml-1">
+          <p class="text-slate-500 text-sm hidden lg:block mr-2">Advanced quoting with filament, post-processing labor, and hardware tracking.</p>
+          <button onclick="openProfilesModal()" class="text-xs bg-white border border-slate-200 px-3 py-1.5 rounded-lg flex items-center gap-2 hover:bg-slate-50 transition shadow-sm text-slate-700 font-semibold">
+            <i data-lucide="library" class="w-3.5 h-3.5 text-blue-600"></i> Filament Profiles
+          </button>
+          <button onclick="openSettingsModal()" class="text-xs bg-white border border-slate-200 px-3 py-1.5 rounded-lg flex items-center gap-2 hover:bg-slate-50 transition shadow-sm text-slate-700 font-semibold" title="Settings & API Key">
+            <i data-lucide="settings" class="w-3.5 h-3.5 text-slate-500"></i> Settings
+          </button>
+        </div>
+      </div>
+      <div class="bg-white px-4 py-2 rounded-xl shadow-sm border border-slate-200 flex flex-col items-end">
+        <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Suggested Retail Price</span>
+        <span class="text-2xl font-black text-blue-700" id="metric-recommended-price-large">RM 0.00</span>
+      </div>
+    </header>
+
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+      
+      <!-- Left Column: Inputs -->
+      <div class="xl:col-span-7 space-y-6">
+        
+        <!-- Dynamic Plates Container -->
+        <div id="plates-container" class="space-y-6">
+          <!-- Plates rendered via JS -->
+        </div>
+        
+        <button onclick="addPlate()" class="w-full py-3 bg-white border-2 border-dashed border-slate-300 rounded-2xl text-slate-500 font-bold hover:border-blue-400 hover:text-blue-600 transition flex items-center justify-center gap-2 shadow-sm">
+          <i data-lucide="plus" class="w-5 h-5"></i> Add Another Plate
+        </button>
+
+        <!-- Business Rates -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 flex flex-col justify-between">
+          <div>
+            <h2 class="text-base font-semibold mb-3 flex items-center gap-2 text-slate-800">
+              <i data-lucide="briefcase" class="w-[18px] h-[18px] text-slate-400"></i> Labor & Margins
+            </h2>
+            <div class="space-y-4">
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="text-[11px] font-semibold text-slate-500 uppercase block mb-0.5">Post-Proc (Mins)</label>
+                  <p class="text-[9px] text-slate-400 mb-1 leading-tight">(cleanup, assembly)</p>
+                  <input type="number" id="postProcMins" min="0" value="5" class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                </div>
+                <div>
+                  <label class="text-[11px] font-semibold text-slate-500 uppercase block mb-0.5">Labor Rate (RM/hr)</label>
+                  <p class="text-[9px] text-slate-400 mb-1 leading-tight">(suggested: RM15 - RM30)</p>
+                  <input type="number" id="postProcRate" min="0" value="30" class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-3 border-t border-slate-100 pt-3">
+                <div>
+                  <label class="text-[11px] font-semibold text-slate-500 uppercase block mb-1">Failure Risk (%)</label>
+                  <input type="number" id="failureRisk" min="0" value="10" class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                </div>
+                <div>
+                  <label class="text-[11px] font-semibold text-blue-600 uppercase block mb-1">Markup Margin (%)</label>
+                  <input type="number" id="markup" min="0" value="100" class="w-full px-3 py-1.5 bg-blue-50 border border-blue-200 text-blue-900 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none font-bold" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Additional Parts & Hardware Card -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-base font-semibold flex items-center gap-2 text-slate-800">
+              <i data-lucide="package" class="w-[18px] h-[18px] text-slate-400"></i> Additional Parts & Hardware (<span id="other-material-count">0</span>)
+            </h2>
+            <button 
+              onclick="handleAddOtherMaterial()"
+              class="flex items-center gap-1 text-xs font-semibold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-lg hover:bg-indigo-100 transition"
+            >
+              <i data-lucide="plus" class="w-[14px] h-[14px]"></i> Add Part
+            </button>
+          </div>
+          
+          <div id="other-materials-container" class="space-y-3">
+            <!-- Dynamic Non-Filament Items Injected Here -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right Column: Results Dashboard -->
+      <div class="xl:col-span-5 space-y-6">
+        
+        <!-- Cost Breakdown Analysis -->
+        <div class="bg-slate-800 text-white rounded-2xl shadow-lg p-1 overflow-hidden">
+          <div class="bg-slate-900/40 p-5 rounded-t-xl">
+            <h3 class="text-slate-300 text-xs font-bold tracking-wider uppercase mb-4 flex items-center gap-2">
+              <i data-lucide="calculator" class="w-[14px] h-[14px]"></i> Financial Breakdown
+            </h3>
+            
+            <div class="space-y-3 text-sm">
+              <div class="flex justify-between items-center">
+                <span class="text-slate-400">Filament Cost (Base)</span>
+                <span class="font-medium" id="metric-material-cost">RM 0.00</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-slate-400">Post-Processing Cost</span>
+                <span class="font-medium text-amber-300" id="metric-labor-overhead">RM 0.00</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-slate-400">Additional Parts Cost</span>
+                <span class="font-medium text-indigo-300" id="metric-other-cost">RM 0.00</span>
+              </div>
+              
+              <div class="h-px bg-slate-700 my-2"></div>
+              
+              <div class="flex justify-between items-center text-slate-300">
+                <span>Base Subtotal</span>
+                <span id="metric-subtotal">RM 0.00</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-rose-400 text-xs flex items-center gap-1">+ Filament Failure Buffer</span>
+                <span class="text-rose-400" id="metric-risk-cost">RM 0.00</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-slate-800 p-5 rounded-b-xl border-t border-slate-700">
+            <div class="flex justify-between items-center mb-1">
+              <span class="text-slate-300 font-semibold">Total Production Cost</span>
+              <span class="text-lg font-bold" id="metric-total-cost">RM 0.00</span>
+            </div>
+            <div class="flex justify-between items-center mb-4">
+              <span class="text-emerald-400 text-sm flex items-center gap-1">+ Filament Markup Margin</span>
+              <span class="text-emerald-400 font-bold" id="metric-profit-margin">RM 0.00</span>
+            </div>
+            
+            <div class="bg-slate-700/50 p-4 rounded-xl flex justify-between items-center border border-slate-600 mb-4">
+              <div>
+                <span class="text-white font-bold uppercase tracking-wide text-sm block">Final Retail Price</span>
+                <span class="text-slate-400 text-[11px]">Retail Filament Rate: <span id="metric-retail-rate" class="font-medium text-slate-300">RM 0.00 / g</span></span>
+              </div>
+              <span class="text-3xl font-black text-blue-400" id="metric-recommended-price">RM 0.00</span>
+            </div>
+
+            <button 
+              onclick="openInvoiceModal()"
+              class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md transition"
+            >
+              <i data-lucide="file-text" class="w-5 h-5"></i> Generate PDF Invoice
+            </button>
+          </div>
+        </div>
+
+        <!-- Weight & Waste Box -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+          <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2 text-sm">
+            <i data-lucide="percent" class="w-4 h-4 text-rose-500"></i> Weight & Waste Distribution
+          </h3>
+          
+          <div class="grid grid-cols-4 gap-2 mb-4">
+            <div class="bg-slate-50 p-2 rounded-lg border border-slate-200 flex flex-col justify-between text-center">
+              <div class="text-slate-500 text-[10px] font-bold uppercase mb-1">Model</div>
+              <div class="font-black text-slate-700"><span id="metric-model-weight">0</span> <span class="text-[10px] font-medium">g</span></div>
+            </div>
+            <div class="bg-indigo-50 p-2 rounded-lg border border-indigo-200 flex flex-col justify-between text-center">
+              <div class="text-indigo-400 text-[10px] font-bold uppercase mb-1">Support</div>
+              <div class="font-black text-indigo-700"><span id="metric-support-weight">0</span> <span class="text-[10px] font-medium">g</span></div>
+            </div>
+            <div class="bg-rose-50 p-2 rounded-lg border border-rose-200 flex flex-col justify-between text-center">
+              <div class="text-rose-400 text-[10px] font-bold uppercase mb-1">Flush</div>
+              <div class="font-black text-rose-700"><span id="metric-flushed-weight">0</span> <span class="text-[10px] font-medium">g</span></div>
+            </div>
+            <div class="bg-amber-50 p-2 rounded-lg border border-amber-200 flex flex-col justify-between text-center">
+              <div class="text-amber-500 text-[10px] font-bold uppercase mb-1">Tower</div>
+              <div class="font-black text-amber-600"><span id="metric-tower-weight">0</span> <span class="text-[10px] font-medium">g</span></div>
+            </div>
+          </div>
+          
+          <div class="flex justify-between items-center bg-blue-50 p-2 rounded-lg border border-blue-200 mb-4">
+             <span class="text-blue-500 text-[11px] font-bold uppercase ml-1">Total Slicer Weight</span>
+             <div class="font-black text-blue-700"><span id="metric-total-weight">0</span> <span class="text-[10px] font-medium">g</span></div>
+          </div>
+
+          <div class="space-y-2">
+            <div class="flex items-center justify-between text-xs text-rose-800 bg-rose-50 py-2 px-3 rounded-lg border border-rose-100">
+              <span>Waste Cost (Flushed + Tower)</span>
+              <span class="font-bold" id="metric-waste-cost">RM 0.00</span>
+            </div>
+            <div class="flex items-center justify-between text-xs text-rose-800 bg-rose-50 py-2 px-3 rounded-lg border border-rose-100">
+              <span>Waste Ratio vs Total Weight</span>
+              <span class="font-bold" id="metric-waste-ratio">0.0%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Time Breakdown -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+           <h3 class="font-bold text-slate-800 mb-3 flex items-center gap-2 text-sm">
+            <i data-lucide="clock" class="w-4 h-4 text-indigo-500"></i> Duration Analysis
+          </h3>
+          <div class="space-y-3">
+            <div class="flex justify-between items-center text-sm">
+              <span class="text-slate-600">Total Machine Print Time</span>
+              <span class="font-semibold text-slate-800" id="metric-total-time">0h 0m 0s</span>
+            </div>
+            <div class="flex justify-between items-center text-sm">
+              <span class="text-slate-600">Post-Processing Time</span>
+              <span class="font-semibold text-slate-800" id="metric-postproc-time">5m</span>
+            </div>
+            <div class="h-px w-full bg-slate-100"></div>
+            <div class="flex justify-between items-center text-sm">
+              <span class="text-slate-800 font-bold">Total Project Time</span>
+              <span class="font-bold text-blue-700 text-base" id="metric-combined-time">0h 0m 0s</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS MODAL -->
+  <div id="settings-modal-backdrop" class="fixed inset-0 bg-slate-900/60 hidden z-50 overflow-y-auto p-4 md:p-6 backdrop-blur-sm flex items-center justify-center">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col">
+      <div class="bg-slate-100 p-4 border-b border-slate-200 flex justify-between items-center">
+        <div class="flex gap-2 items-center">
+          <i data-lucide="settings" class="text-slate-600 w-5 h-5"></i>
+          <span class="font-bold text-slate-800 text-lg">App Settings</span>
+        </div>
+        <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-slate-700 p-1 bg-slate-200 hover:bg-slate-300 rounded transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div class="p-6 bg-slate-50/50 flex flex-col gap-4">
+        
+        <div class="bg-blue-50 border border-blue-200 p-4 rounded-xl">
+          <h3 class="text-sm font-bold text-blue-800 mb-2 flex items-center gap-2">
+            <i data-lucide="sparkles" class="w-4 h-4"></i> AI Auto-Fill API Key
+          </h3>
+          <p class="text-xs text-blue-700 mb-3 leading-relaxed">
+            To use the AI screenshot scanner, you need your own free Google Gemini API key. This keeps the tool free for everyone. Your key is saved locally on your device and is never sent anywhere except directly to Google.
+          </p>
+          <ol class="text-[11px] text-blue-700 list-decimal pl-4 mb-4 space-y-1">
+            <li>Go to <a href="https://aistudio.google.com/app/apikey" target="_blank" class="font-bold underline hover:text-blue-900">Google AI Studio</a></li>
+            <li>Sign in and click "Create API key"</li>
+            <li>Paste the key below</li>
+          </ol>
+          
+          <label class="text-[10px] font-semibold text-slate-500 uppercase block mb-1">Your Gemini API Key</label>
+          <input type="password" id="settings-api-key" placeholder="AIzaSy..." class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-mono shadow-sm">
+        </div>
+
+        <div class="flex justify-end pt-2">
+           <button onclick="saveSettings()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-lg transition shadow-sm text-sm">
+             Save Settings
+           </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- FILAMENT PROFILES MODAL -->
+  <div id="profiles-modal-backdrop" class="fixed inset-0 bg-slate-900/60 hidden z-50 overflow-y-auto p-4 md:p-6 backdrop-blur-sm flex items-center justify-center">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div class="bg-slate-100 p-4 border-b border-slate-200 flex justify-between items-center">
+        <div class="flex gap-2 items-center">
+          <i data-lucide="library" class="text-blue-600 w-5 h-5"></i>
+          <span class="font-bold text-slate-800 text-lg">Filament Profiles Library</span>
+        </div>
+        <button onclick="closeProfilesModal()" class="text-slate-400 hover:text-slate-700 p-1 bg-slate-200 hover:bg-slate-300 rounded transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div class="flex-1 overflow-y-auto p-6 bg-slate-50/50 flex flex-col gap-6">
+        
+        <!-- Add New Profile Form -->
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+          <h3 class="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2"><i data-lucide="plus-circle" class="w-4 h-4 text-emerald-500"></i> Save New Profile</h3>
+          <div class="grid grid-cols-2 md:grid-cols-6 gap-3 items-end">
+            <div class="col-span-2 md:col-span-2">
+              <label class="text-[10px] font-semibold text-slate-500 uppercase block mb-1">Filament Name</label>
+              <input type="text" id="new-prof-name" placeholder="e.g. Bambu Basic" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500">
+            </div>
+            <div>
+              <label class="text-[10px] font-semibold text-slate-500 uppercase block mb-1">Type</label>
+              <select id="new-prof-type" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500">
+                <option value="PLA">PLA</option>
+                <option value="PLA+">PLA+</option>
+                <option value="PETG">PETG</option>
+                <option value="PETG+">PETG+</option>
+                <option value="ABS">ABS</option>
+                <option value="TPU">TPU</option>
+                <option value="ASA">ASA</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-[10px] font-semibold text-slate-500 uppercase block mb-1">Finish</label>
+              <select id="new-prof-finish" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500">
+                <option value="Standard">Standard</option>
+                <option value="Matte">Matte</option>
+                <option value="Gloss">Gloss</option>
+                <option value="Shiny">Shiny</option>
+                <option value="Silk">Silk</option>
+                <option value="Carbon Fiber">Carbon Fiber</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-[10px] font-semibold text-slate-500 uppercase block mb-1">Price (RM)</label>
+              <input type="number" id="new-prof-price" placeholder="85" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500">
+            </div>
+            <div>
+              <label class="text-[10px] font-semibold text-slate-500 uppercase block mb-1">Spool (g)</label>
+              <input type="number" id="new-prof-weight" value="1000" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500">
+            </div>
+          </div>
+          <div class="flex justify-end items-center mt-3 pt-3 border-t border-slate-100">
+             <button onclick="saveNewProfile()" class="bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold px-4 py-2 rounded-lg transition flex items-center gap-1 shadow-sm">
+               <i data-lucide="save" class="w-3.5 h-3.5"></i> Save Profile
+             </button>
+          </div>
+        </div>
+
+        <!-- Saved Profiles List -->
+        <div>
+          <h3 class="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2"><i data-lucide="list" class="w-4 h-4 text-slate-400"></i> Your Saved Profiles</h3>
+          <div id="profiles-list-container" class="space-y-2 max-h-[300px] overflow-y-auto pr-2">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- PDF INVOICE MODAL BACKDROP (Interactive preview) -->
+  <div id="invoice-modal-backdrop" class="fixed inset-0 bg-slate-900/60 hidden z-50 overflow-y-auto p-4 md:p-6 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-4xl mx-auto overflow-hidden">
+      
+      <!-- Control Panel (Hides on standard print window) -->
+      <div class="bg-slate-100 p-4 border-b border-slate-200 flex flex-wrap gap-4 items-center justify-between modal-control-buttons">
+        <div class="flex gap-3 items-center">
+          <i data-lucide="file-text" class="text-blue-600"></i>
+          <span class="font-bold text-slate-800 text-lg">Generate Invoice / Quotation</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button 
+            onclick="triggerSystemPrint()" 
+            class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-2 rounded-lg flex items-center gap-2 text-sm shadow-sm"
+          >
+            <i data-lucide="download" class="w-4 h-4"></i> Save / Print PDF
+          </button>
+          <button 
+            onclick="closeInvoiceModal()" 
+            class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold px-4 py-2 rounded-lg text-sm"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+
+      <!-- Live Editable Invoice Configuration -->
+      <div class="p-6 bg-slate-50/50 border-b border-slate-100 modal-control-buttons grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Invoice / Reference No.</label>
+          <input type="text" id="invoiceNumInput" value="" placeholder="INV-2026-001" class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Project Name</label>
+          <input type="text" id="projectNameInput" value="" placeholder="Custom Project" class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Client Name</label>
+          <input type="text" id="clientNameInput" value="" placeholder="Client Name" class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm" />
+        </div>
+      </div>
+
+      <!-- Live Invoice Sheet Preview -->
+      <div class="p-8 max-h-[70vh] overflow-y-auto bg-white">
+        <div id="invoice-sheet" class="border border-slate-200 p-8 rounded-xl shadow-inner max-w-3xl mx-auto bg-white">
+          
+          <!-- Invoice Header -->
+          <div class="flex justify-between items-start mb-8 pb-6 border-b border-slate-200">
+            <div>
+              <h2 class="text-2xl font-black text-slate-800 tracking-tight">INVOICE & QUOTATION</h2>
+              <p class="text-xs text-slate-500 mt-1">3D PRINTING PRODUCTION & HARDWARE REPORT</p>
+            </div>
+            <div class="text-right">
+              <span class="text-sm font-bold text-slate-700" id="invoice-id-display">#INV</span>
+              <p class="text-xs text-slate-500 mt-1" id="invoice-date-display">Date: </p>
+            </div>
+          </div>
+
+          <!-- Project & client Meta details -->
+          <div class="grid grid-cols-2 gap-4 mb-8 text-sm">
+            <div>
+              <span class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Client / Attention</span>
+              <p class="font-bold text-slate-800" id="invoice-client-display">-</p>
+            </div>
+            <div>
+              <span class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Project Scope</span>
+              <p class="font-bold text-slate-800" id="invoice-project-display">-</p>
+            </div>
+          </div>
+
+          <!-- Print Job Summary Stats Panel -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8 bg-slate-50 p-4 rounded-xl border border-slate-100">
+            <div>
+              <span class="text-xs font-medium text-slate-500">Machine Print Time</span>
+              <p class="text-sm font-bold text-slate-800" id="invoice-time-display">0h 0m 0s</p>
+            </div>
+            <div>
+              <span class="text-xs font-medium text-slate-500">Post-Processing Time</span>
+              <p class="text-sm font-bold text-slate-800" id="invoice-postproc-display">0m</p>
+            </div>
+            <div>
+              <span class="text-xs font-medium text-slate-500">Combined Print Weight</span>
+              <p class="text-sm font-bold text-slate-800" id="invoice-weight-display">0.00 g</p>
+              <span class="text-[9px] text-slate-400 block mt-0.5 leading-tight">(incl. model, support, flush, tower, etc.)</span>
+            </div>
+            <div>
+              <span class="text-xs font-medium text-slate-500">Filament Retail Rate</span>
+              <p class="text-sm font-bold text-blue-700" id="invoice-retail-rate-display">RM 0.00 / g</p>
+            </div>
+          </div>
+
+          <!-- Filament Used Table -->
+          <div class="mb-6">
+            <h4 class="text-xs font-extrabold text-slate-400 tracking-wider uppercase mb-2">1. Filament Consumption</h4>
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-100 text-slate-700 uppercase font-bold text-[10px]">
+                  <th class="p-2 rounded-l-md">Filament Color / Name</th>
+                  <th class="p-2 text-right rounded-r-md">Used Weight</th>
+                </tr>
+              </thead>
+              <tbody id="invoice-filaments-rows">
+                <!-- Dynamically populated rows -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Other Parts Used Table -->
+          <div class="mb-6">
+            <h4 class="text-xs font-extrabold text-slate-400 tracking-wider uppercase mb-2">2. Hardware Components & Parts</h4>
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-100 text-slate-700 uppercase font-bold text-[10px]">
+                  <th class="p-2 rounded-l-md">Part / Component</th>
+                  <th class="p-2 text-right">RM / Unit</th>
+                  <th class="p-2 text-right">Quantity</th>
+                  <th class="p-2 text-right rounded-r-md">Total Cost</th>
+                </tr>
+              </thead>
+              <tbody id="invoice-parts-rows">
+                <!-- Dynamically populated rows -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Total Calculation Panel -->
+          <div class="border-t-2 border-slate-900 pt-4 flex flex-col items-end">
+            <div class="w-80 space-y-2">
+              <div class="flex justify-between text-xs text-slate-500 font-medium">
+                <span>Filament Retail Cost (<span id="invoice-calc-weight">0</span>g × <span id="invoice-calc-rate">RM 0.00</span>):</span>
+                <span id="invoice-filament-subtotal-display" class="font-bold text-slate-700">RM 0.00</span>
+              </div>
+              <div class="flex justify-between text-xs text-slate-500 font-medium">
+                <span>Post-Processing Labor:</span>
+                <span id="invoice-labor-subtotal-display" class="font-bold text-slate-700">RM 0.00</span>
+              </div>
+              <div class="flex justify-between text-xs text-slate-500 font-medium">
+                <span>Hardware Components Subtotal:</span>
+                <span id="invoice-parts-subtotal-display" class="font-bold text-slate-700">RM 0.00</span>
+              </div>
+              <div class="flex justify-between text-base font-black text-slate-900 border-t border-slate-200 pt-2">
+                <span>Total Invoice Price:</span>
+                <span id="invoice-grand-display">RM 0.00</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- HIDDEN PRINT AREA (Shown only via @media print query in browser window) -->
+  <div id="invoice-print-area" class="hidden">
+    <!-- Copy of #invoice-sheet will be deep cloned here during printing -->
+  </div>
+
+  <script>
+    // --- Application State ---
+    let savedProfiles = JSON.parse(localStorage.getItem('3dCalcFilamentProfiles')) || [
+      { id: 'def1', name: 'Generic PLA', type: 'PLA', finish: 'Standard', price: 65, weight: 1000 },
+      { id: 'def2', name: 'Generic PETG', type: 'PETG', finish: 'Standard', price: 70, weight: 1000 }
+    ];
+
+    let plates = [
+      {
+        id: Math.random().toString(36).substr(2, 9),
+        name: 'Plate 1',
+        baseHours: 0, baseMinutes: 0, baseSeconds: 0,
+        weightInputMode: 'simple', // 'simple' or 'detailed'
+        totalSlicerWeight: 0,
+        modelWeight: 0, supportWeight: 0, flushedWeight: 0, towerWeight: 0,
+        filaments: [
+          { id: Math.random().toString(36).substr(2, 9), color: '#888888', name: 'Filament 1', price: 0, spoolWeight: 1000, usedWeight: 0 }
+        ]
+      }
+    ];
+
+    let otherMaterials = [];
+
+    const bizSettings = {
+      postProcMins: 5,
+      postProcRate: 30, 
+      failureRisk: 10,
+      markup: 100
+    };
+
+    let appMetrics = {}; // Store results globally for the invoice
+
+    // --- Helpers ---
+    const formatCurrency = (val) => new Intl.NumberFormat('ms-MY', { style: 'currency', currency: 'MYR' }).format(val || 0);
+
+    const formatTime = (totalMins) => {
+      const totalSecs = Math.round(totalMins * 60);
+      const h = Math.floor(totalSecs / 3600);
+      const m = Math.floor((totalSecs % 3600) / 60);
+      const s = totalSecs % 60;
+      
+      const parts = [];
+      if (h > 0) parts.push(`${h}h`);
+      if (m > 0 || h > 0) parts.push(`${m}m`);
+      parts.push(`${s}s`);
+      return parts.join(' ') || '0s';
+    };
+
+    // --- DOM Update Engine ---
+    function updateMetrics() {
+      let filamentCost = 0;
+      let totalFilamentUsedWeight = 0;
+      
+      let totalBaseTimeMins = 0;
+      let grandSlicerWeight = 0;
+      let grandWasteWeight = 0;
+      let grandModelWeight = 0;
+      let grandSupportWeight = 0;
+      let grandFlushedWeight = 0;
+      let grandTowerWeight = 0;
+
+      // 1. Calculate across all plates
+      plates.forEach(p => {
+        totalBaseTimeMins += (Number(p.baseHours) * 60) + Number(p.baseMinutes) + (Number(p.baseSeconds) / 60);
+        
+        let pTotalWeight = 0;
+        let pWasteWeight = 0;
+
+        if (p.weightInputMode === 'simple') {
+          pTotalWeight = Number(p.totalSlicerWeight) || 0;
+        } else {
+          pTotalWeight = (Number(p.modelWeight) || 0) + (Number(p.supportWeight) || 0) + (Number(p.flushedWeight) || 0) + (Number(p.towerWeight) || 0);
+          pWasteWeight = (Number(p.flushedWeight) || 0) + (Number(p.towerWeight) || 0);
+          
+          grandModelWeight += (Number(p.modelWeight) || 0);
+          grandSupportWeight += (Number(p.supportWeight) || 0);
+          grandFlushedWeight += (Number(p.flushedWeight) || 0);
+          grandTowerWeight += (Number(p.towerWeight) || 0);
+        }
+        
+        grandSlicerWeight += pTotalWeight;
+        grandWasteWeight += pWasteWeight;
+
+        p.filaments.forEach(f => {
+          const spool = Number(f.spoolWeight) || 1000;
+          const price = Number(f.price) || 0;
+          const used = Number(f.usedWeight) || 0;
+          
+          const pricePerGram = spool > 0 ? price / spool : 0;
+          filamentCost += (pricePerGram * used);
+          totalFilamentUsedWeight += used;
+        });
+      });
+
+      // 2. Other Materials & Parts Cost
+      let otherCost = 0;
+      otherMaterials.forEach(item => {
+        otherCost += ((Number(item.price) || 0) * (Number(item.quantity) || 0));
+      });
+
+      // 3. Post-Processing Cost Formula
+      const postProcCost = ((Number(bizSettings.postProcMins) || 0) / 60) * (Number(bizSettings.postProcRate) || 0);
+
+      // 4. Waste logic
+      const wasteRatio = grandSlicerWeight > 0 ? (grandWasteWeight / grandSlicerWeight) * 100 : 0;
+      const avgCostPerGram = totalFilamentUsedWeight > 0 ? filamentCost / totalFilamentUsedWeight : 0;
+      const wasteCost = grandWasteWeight * avgCostPerGram;
+
+      // 5. Total Time Calculations
+      const totalCombinedMins = totalBaseTimeMins + (Number(bizSettings.postProcMins) || 0);
+
+      // 6. Advanced Costs 
+      const baseProductionCost = filamentCost + otherCost + postProcCost;
+      const filamentRiskCost = filamentCost * ((Number(bizSettings.failureRisk) || 0) / 100);
+      const filamentTotalWithRisk = filamentCost + filamentRiskCost;
+      const filamentMarkupCost = filamentTotalWithRisk * ((Number(bizSettings.markup) || 0) / 100);
+      const retailFilamentTotalCost = filamentTotalWithRisk + filamentMarkupCost;
+      
+      const retailRatePerGram = totalFilamentUsedWeight > 0 ? (retailFilamentTotalCost / totalFilamentUsedWeight) : 0;
+      const recommendedPrice = retailFilamentTotalCost + otherCost + postProcCost;
+
+      // 7. Store to global metrics for Invoice
+      appMetrics = {
+        totalBaseTimeMins,
+        grandSlicerWeight,
+        postProcCost,
+        retailFilamentTotalCost,
+        otherCost,
+        recommendedPrice,
+        retailRatePerGram
+      };
+
+      // 8. Render Dashboard Outputs safely
+      const setInnerText = (id, text) => {
+        const el = document.getElementById(id);
+        if (el) el.innerText = text;
+      };
+
+      setInnerText('metric-recommended-price', formatCurrency(recommendedPrice));
+      setInnerText('metric-recommended-price-large', formatCurrency(recommendedPrice));
+      setInnerText('metric-retail-rate', formatCurrency(retailRatePerGram) + ' / g');
+      
+      setInnerText('metric-material-cost', formatCurrency(filamentCost));
+      setInnerText('metric-other-cost', formatCurrency(otherCost));
+      setInnerText('metric-labor-overhead', formatCurrency(postProcCost));
+      setInnerText('metric-subtotal', formatCurrency(baseProductionCost));
+      setInnerText('metric-risk-cost', formatCurrency(filamentRiskCost));
+      setInnerText('metric-total-cost', formatCurrency(filamentCost + otherCost + postProcCost + filamentRiskCost));
+      setInnerText('metric-profit-margin', formatCurrency(filamentMarkupCost));
+
+      setInnerText('metric-model-weight', Number(grandModelWeight.toFixed(2)));
+      setInnerText('metric-support-weight', Number(grandSupportWeight.toFixed(2)));
+      setInnerText('metric-flushed-weight', Number(grandFlushedWeight.toFixed(2)));
+      setInnerText('metric-tower-weight', Number(grandTowerWeight.toFixed(2)));
+      setInnerText('metric-total-weight', Number(grandSlicerWeight.toFixed(2)));
+      
+      setInnerText('metric-waste-cost', formatCurrency(wasteCost));
+      setInnerText('metric-waste-ratio', wasteRatio.toFixed(1) + '%');
+      
+      setInnerText('metric-total-time', formatTime(totalBaseTimeMins));
+      setInnerText('metric-postproc-time', bizSettings.postProcMins + 'm');
+      setInnerText('metric-combined-time', formatTime(totalCombinedMins));
+    }
+
+    // --- Dynamic Plates Rendering ---
+    function renderPlates() {
+      const container = document.getElementById('plates-container');
+      container.innerHTML = plates.map((p, index) => {
+        const isSimple = p.weightInputMode === 'simple';
+        return `
+          <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 plate-card">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
+              <div class="flex items-center gap-2 flex-1">
+                <div class="bg-blue-100 text-blue-600 p-1.5 rounded-lg"><i data-lucide="layers" class="w-4 h-4"></i></div>
+                <input type="text" class="plate-input text-lg font-bold text-slate-800 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-500 outline-none w-full sm:w-2/3 px-1 transition" data-plate-id="${p.id}" data-field="name" value="${p.name}">
+              </div>
+              <div class="flex items-center gap-2">
+                <input type="file" id="upload-${p.id}" accept="image/*" class="hidden" onchange="handleSlicerUpload(event, '${p.id}')">
+                <button onclick="document.getElementById('upload-${p.id}').click()" class="flex items-center gap-1 text-[10px] font-bold bg-purple-100 text-purple-700 px-2 py-1.5 rounded-md hover:bg-purple-200 transition shadow-sm" id="ai-scan-btn-${p.id}">
+                  <i data-lucide="scan-line" class="w-3.5 h-3.5"></i> AI Auto-Fill
+                </button>
+                ${plates.length > 1 ? `
+                <button onclick="removePlate('${p.id}')" class="text-slate-400 hover:text-red-500 p-1.5 rounded-md hover:bg-red-50 transition" title="Remove Plate">
+                  <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>` : ''}
+              </div>
+            </div>
+
+            <!-- Time Inputs -->
+            <div class="grid grid-cols-3 gap-3 mb-4">
+              <div>
+                <label class="text-[10px] font-bold text-slate-400 uppercase">Hours</label>
+                <input type="number" min="0" data-plate-id="${p.id}" data-field="baseHours" value="${p.baseHours}" class="plate-input w-full mt-1 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold focus:ring-2 focus:ring-blue-500 outline-none">
+              </div>
+              <div>
+                <label class="text-[10px] font-bold text-slate-400 uppercase">Minutes</label>
+                <input type="number" min="0" max="59" data-plate-id="${p.id}" data-field="baseMinutes" value="${p.baseMinutes}" class="plate-input w-full mt-1 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold focus:ring-2 focus:ring-blue-500 outline-none">
+              </div>
+              <div>
+                <label class="text-[10px] font-bold text-slate-400 uppercase">Seconds</label>
+                <input type="number" min="0" max="59" data-plate-id="${p.id}" data-field="baseSeconds" value="${p.baseSeconds}" class="plate-input w-full mt-1 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold focus:ring-2 focus:ring-blue-500 outline-none">
+              </div>
+            </div>
+
+            <!-- Weight Header & Toggle -->
+            <div class="flex justify-between items-center border-t border-slate-100 pt-3 mt-2 mb-3">
+              <label class="text-xs font-semibold text-slate-600">Plate Weights</label>
+              <div class="flex bg-slate-100 p-1 rounded-lg">
+                <button onclick="setWeightMode('${p.id}', 'simple')" class="px-3 py-1 text-[10px] font-bold rounded-md transition ${isSimple ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}">Simple</button>
+                <button onclick="setWeightMode('${p.id}', 'detailed')" class="px-3 py-1 text-[10px] font-bold rounded-md transition ${!isSimple ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}">Detailed</button>
+              </div>
+            </div>
+
+            <!-- Simple Mode Input -->
+            <div class="${isSimple ? 'block' : 'hidden'} mb-4">
+              <label class="text-[10px] font-semibold text-slate-500 uppercase block mb-1">Total Print Weight (g)</label>
+              <input type="number" min="0" data-plate-id="${p.id}" data-field="totalSlicerWeight" value="${p.totalSlicerWeight}" class="plate-input w-full px-3 py-2 bg-blue-50 border border-blue-200 text-blue-900 rounded-lg text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" />
+            </div>
+
+            <!-- Detailed Mode Inputs -->
+            <div class="${!isSimple ? 'grid' : 'hidden'} grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                <div>
+                  <label class="text-[10px] font-semibold text-slate-500 uppercase block mb-1">Model (g)</label>
+                  <input type="number" min="0" data-plate-id="${p.id}" data-field="modelWeight" value="${p.modelWeight}" class="plate-input w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm" />
+                </div>
+                <div>
+                  <label class="text-[10px] font-semibold text-indigo-500 uppercase block mb-1">Supports (g)</label>
+                  <input type="number" min="0" data-plate-id="${p.id}" data-field="supportWeight" value="${p.supportWeight}" class="plate-input w-full px-2 py-1.5 bg-indigo-50 border border-indigo-200 text-indigo-900 rounded-lg text-sm" />
+                </div>
+                <div>
+                  <label class="text-[10px] font-semibold text-rose-500 uppercase block mb-1">Flushed (g)</label>
+                  <input type="number" min="0" data-plate-id="${p.id}" data-field="flushedWeight" value="${p.flushedWeight}" class="plate-input w-full px-2 py-1.5 bg-rose-50 border border-rose-200 text-rose-900 rounded-lg text-sm" />
+                </div>
+                <div>
+                  <label class="text-[10px] font-semibold text-amber-500 uppercase block mb-1">Tower (g)</label>
+                  <input type="number" min="0" data-plate-id="${p.id}" data-field="towerWeight" value="${p.towerWeight}" class="plate-input w-full px-2 py-1.5 bg-amber-50 border border-amber-200 text-amber-900 rounded-lg text-sm" />
+                </div>
+            </div>
+
+            <!-- Filaments Section for Plate -->
+            <div class="border-t border-slate-100 pt-4">
+               <div class="flex justify-between items-center mb-3">
+                 <label class="text-xs font-semibold text-slate-600 flex items-center gap-1"><i data-lucide="palette" class="w-3.5 h-3.5"></i> Filaments Used</label>
+                 <button onclick="addFilamentToPlate('${p.id}')" class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded hover:bg-blue-100 transition flex items-center gap-1"><i data-lucide="plus" class="w-3 h-3"></i> Add</button>
+               </div>
+               <div class="space-y-2">
+                 ${p.filaments.map(f => `
+                    <div class="flex flex-col gap-2 bg-slate-50 p-2.5 rounded-lg border border-slate-200 relative group pr-6">
+                        
+                        <div class="w-full">
+                          <select onchange="applyProfileToFilament('${p.id}', '${f.id}', this.value)" class="w-full text-xs font-semibold bg-white border border-slate-200 text-slate-600 rounded p-1 outline-none focus:border-blue-500 cursor-pointer shadow-sm">
+                            <option value="">-- Load Saved Filament Profile --</option>
+                            ${savedProfiles.map(prof => `<option value="${prof.id}">${prof.name} (${prof.type} - ${prof.finish || 'Standard'}) - RM${prof.price}/${prof.weight}g</option>`).join('')}
+                          </select>
+                        </div>
+
+                        <div class="flex flex-wrap md:flex-nowrap items-center gap-2">
+                          <input type="color" data-plate-id="${p.id}" data-filament-id="${f.id}" data-field="color" value="${f.color}" class="filament-input w-6 h-6 rounded cursor-pointer shrink-0 border border-slate-300">
+                          <input type="text" data-plate-id="${p.id}" data-filament-id="${f.id}" data-field="name" value="${f.name}" placeholder="Name" class="filament-input flex-1 min-w-[80px] bg-transparent text-xs font-semibold text-slate-700 outline-none border-b border-slate-300 focus:border-blue-500 pb-0.5">
+                          
+                          <div class="flex items-center gap-1 w-20">
+                            <span class="text-[9px] text-slate-400 font-bold uppercase">RM</span>
+                            <input type="number" min="0" data-plate-id="${p.id}" data-filament-id="${f.id}" data-field="price" value="${f.price || ''}" placeholder="Price" class="filament-input w-full text-xs bg-transparent border-b border-slate-300 outline-none focus:border-blue-500 pb-0.5">
+                          </div>
+                          <div class="flex items-center gap-1 w-20">
+                            <span class="text-[9px] text-slate-400 font-bold uppercase">Spool</span>
+                            <input type="number" min="0" data-plate-id="${p.id}" data-filament-id="${f.id}" data-field="spoolWeight" value="${f.spoolWeight}" placeholder="g" class="filament-input w-full text-xs bg-transparent border-b border-slate-300 outline-none focus:border-blue-500 pb-0.5">
+                          </div>
+                          <div class="flex items-center gap-1 w-20">
+                            <span class="text-[9px] text-blue-500 font-bold uppercase">Used</span>
+                            <input type="number" min="0" data-plate-id="${p.id}" data-filament-id="${f.id}" data-field="usedWeight" value="${f.usedWeight || ''}" placeholder="g" class="filament-input w-full text-xs font-bold text-blue-700 bg-blue-50 border-b border-blue-300 outline-none focus:border-blue-500 pb-0.5 px-1 rounded-t-sm">
+                          </div>
+                        </div>
+                        
+                        <button onclick="removeFilamentFromPlate('${p.id}', '${f.id}')" class="absolute right-1 top-1/2 -translate-y-1/2 text-slate-400 hover:text-red-500 p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <i data-lucide="x" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                 `).join('')}
+               </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+      lucide.createIcons();
+    }
+
+    function addPlate() {
+      plates.push({
+        id: Math.random().toString(36).substr(2, 9),
+        name: `Plate ${plates.length + 1}`,
+        baseHours: 0, baseMinutes: 0, baseSeconds: 0,
+        weightInputMode: 'simple',
+        totalSlicerWeight: 0,
+        modelWeight: 0, supportWeight: 0, flushedWeight: 0, towerWeight: 0,
+        filaments: [
+          { id: Math.random().toString(36).substr(2, 9), color: '#888888', name: 'Filament 1', price: 0, spoolWeight: 1000, usedWeight: 0 }
+        ]
+      });
+      renderPlates();
+      updateMetrics();
+    }
+
+    function removePlate(id) {
+      if(plates.length <= 1) return;
+      plates = plates.filter(p => p.id !== id);
+      renderPlates();
+      updateMetrics();
+    }
+
+    function setWeightMode(plateId, mode) {
+      const p = plates.find(p => p.id === plateId);
+      if(p) {
+        p.weightInputMode = mode;
+        renderPlates();
+        updateMetrics();
+      }
+    }
+
+    function addFilamentToPlate(plateId) {
+      const p = plates.find(p => p.id === plateId);
+      if(p) {
+        p.filaments.push({ id: Math.random().toString(36).substr(2, 9), color: '#888888', name: 'New Filament', price: 0, spoolWeight: 1000, usedWeight: 0 });
+        renderPlates();
+        updateMetrics();
+      }
+    }
+
+    function removeFilamentFromPlate(plateId, filId) {
+      const p = plates.find(p => p.id === plateId);
+      if(p) {
+        p.filaments = p.filaments.filter(f => f.id !== filId);
+        renderPlates();
+        updateMetrics();
+      }
+    }
+
+    // --- Other Materials Management ---
+    function renderOtherMaterials() {
+      const container = document.getElementById('other-materials-container');
+      const countEl = document.getElementById('other-material-count');
+      if(countEl) countEl.innerText = otherMaterials.length;
+
+      container.innerHTML = otherMaterials.map(m => `
+        <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl relative group flex flex-col md:flex-row gap-3">
+          <div class="flex-1">
+            <label class="text-[10px] font-semibold text-slate-500 uppercase block">Part Name</label>
+            <input type="text" data-id="${m.id}" data-field="name" value="${m.name}" class="other-material-input w-full bg-transparent border-b border-slate-300 focus:border-blue-500 pb-0.5 outline-none text-slate-800 text-sm font-medium" placeholder="e.g. Magnet, Bearing" />
+          </div>
+          <div class="flex-[1.2] grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-[10px] font-semibold text-slate-500 uppercase block">RM / Unit</label>
+              <input type="number" min="0" step="0.01" data-id="${m.id}" data-field="price" value="${m.price || ''}" class="other-material-input w-full bg-transparent border-b border-slate-300 focus:border-blue-500 pb-0.5 outline-none text-slate-800 text-sm" />
+            </div>
+            <div>
+              <label class="text-[10px] font-semibold text-indigo-600 uppercase block">Quantity</label>
+              <input type="number" min="0" data-id="${m.id}" data-field="quantity" value="${m.quantity || ''}" class="other-material-input w-full bg-indigo-50 border-b border-indigo-300 focus:border-indigo-600 pb-0.5 px-1 outline-none text-indigo-900 text-sm font-bold rounded-t-sm" />
+            </div>
+          </div>
+          
+          ${otherMaterials.length > 0 ? `
+          <button onclick="handleRemoveOtherMaterial('${m.id}')" class="absolute -top-2 -right-2 bg-red-100 text-red-600 p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-sm hover:bg-red-200">
+            <i data-lucide="trash-2" class="w-[12px] h-[12px]"></i>
+          </button>
+          ` : ''}
+        </div>
+      `).join('');
+
+      lucide.createIcons();
+    }
+
+    function handleAddOtherMaterial() {
+      const newId = Math.random().toString(36).substr(2, 9);
+      otherMaterials.push({ id: newId, name: 'New Component', price: 0, quantity: 0 });
+      renderOtherMaterials();
+      updateMetrics();
+    }
+
+    function handleRemoveOtherMaterial(id) {
+      otherMaterials = otherMaterials.filter(m => m.id !== id);
+      renderOtherMaterials();
+      updateMetrics();
+    }
+
+    // --- Filament Profiles Management ---
+    function openProfilesModal() {
+      document.getElementById('profiles-modal-backdrop').classList.remove('hidden');
+      renderProfilesList();
+    }
+
+    function closeProfilesModal() {
+      document.getElementById('profiles-modal-backdrop').classList.add('hidden');
+    }
+
+    function saveNewProfile() {
+      const name = document.getElementById('new-prof-name').value;
+      const type = document.getElementById('new-prof-type').value;
+      const finish = document.getElementById('new-prof-finish').value;
+      const price = Number(document.getElementById('new-prof-price').value) || 0;
+      const weight = Number(document.getElementById('new-prof-weight').value) || 1000;
+
+      if (!name) return; // Basic validation
+
+      const newProf = {
+        id: Math.random().toString(36).substr(2, 9),
+        name, type, finish, price, weight
+      };
+      
+      savedProfiles.push(newProf);
+      localStorage.setItem('3dCalcFilamentProfiles', JSON.stringify(savedProfiles));
+      
+      // Reset form
+      document.getElementById('new-prof-name').value = '';
+      document.getElementById('new-prof-price').value = '';
+      document.getElementById('new-prof-finish').value = 'Standard';
+      
+      renderProfilesList();
+      renderPlates(); // Refresh dropdowns in main view
+    }
+
+    function deleteProfile(id) {
+      savedProfiles = savedProfiles.filter(p => p.id !== id);
+      localStorage.setItem('3dCalcFilamentProfiles', JSON.stringify(savedProfiles));
+      renderProfilesList();
+      renderPlates(); // Refresh dropdowns in main view
+    }
+
+    function renderProfilesList() {
+      const container = document.getElementById('profiles-list-container');
+      if (savedProfiles.length === 0) {
+        container.innerHTML = `<div class="text-sm text-slate-400 text-center py-4 italic">No profiles saved yet.</div>`;
+        return;
+      }
+
+      container.innerHTML = savedProfiles.map(p => `
+        <div class="flex justify-between items-center bg-white p-3 rounded-xl border border-slate-200 shadow-sm hover:border-blue-200 transition">
+          <div class="flex items-center gap-3">
+             <div>
+               <p class="text-sm font-bold text-slate-800">${p.name} <span class="text-[10px] bg-blue-50 text-blue-600 border border-blue-100 px-1.5 py-0.5 rounded ml-1 uppercase">${p.type}</span> <span class="text-[10px] bg-slate-100 text-slate-500 border border-slate-200 px-1.5 py-0.5 rounded ml-1 uppercase">${p.finish || 'Standard'}</span></p>
+               <p class="text-xs text-slate-500 font-medium mt-0.5">RM ${p.price.toFixed(2)} / ${p.weight}g</p>
+             </div>
+          </div>
+          <button onclick="deleteProfile('${p.id}')" class="text-slate-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition" title="Delete Profile">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
+        </div>
+      `).join('');
+      lucide.createIcons();
+    }
+
+    function applyProfileToFilament(plateId, filamentId, profileId) {
+      if (!profileId) return;
+      const p = plates.find(p => p.id === plateId);
+      const fil = p?.filaments.find(f => f.id === filamentId);
+      const prof = savedProfiles.find(pr => pr.id === profileId);
+      
+      if (fil && prof) {
+        const finishText = (prof.finish && prof.finish !== 'Standard') ? ' (' + prof.finish + ')' : '';
+        fil.name = prof.name + finishText;
+        fil.price = prof.price;
+        fil.spoolWeight = prof.weight;
+        renderPlates();
+        updateMetrics();
+      }
+    }
+
+    // --- Settings & API Key Management ---
+    function openSettingsModal() {
+      const storedKey = localStorage.getItem('3dCalcGeminiKey') || '';
+      document.getElementById('settings-api-key').value = storedKey;
+      document.getElementById('settings-modal-backdrop').classList.remove('hidden');
+    }
+
+    function closeSettingsModal() {
+      document.getElementById('settings-modal-backdrop').classList.add('hidden');
+    }
+
+    function saveSettings() {
+      const key = document.getElementById('settings-api-key').value.trim();
+      localStorage.setItem('3dCalcGeminiKey', key);
+      closeSettingsModal();
+    }
+
+    // --- AI Screenshot Parser ---
+    async function fetchWithRetry(url, options, retries = 3) {
+      const delays = [1000, 2000, 4000];
+      for (let i = 0; i < retries; i++) {
+        try {
+          const response = await fetch(url, options);
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+          return await response.json();
+        } catch (error) {
+          if (i === retries - 1) throw error;
+          await new Promise(res => setTimeout(res, delays[i]));
+        }
+      }
+    }
+
+    async function handleSlicerUpload(event, targetPlateId) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      // Ensure API Key exists
+      const apiKey = localStorage.getItem('3dCalcGeminiKey');
+      if (!apiKey) {
+        openSettingsModal();
+        event.target.value = ''; // Reset file input
+        return;
+      }
+
+      const btn = document.getElementById(`ai-scan-btn-${targetPlateId}`);
+      const originalText = btn.innerHTML;
+      btn.innerHTML = `<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i> Scanning...`;
+      btn.disabled = true;
+      lucide.createIcons();
+
+      try {
+        const base64Data = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result.split(',')[1]);
+          reader.readAsDataURL(file);
+        });
+
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+        
+        const payload = {
+          contents: [{
+            role: "user",
+            parts: [
+              { text: "Analyze this 3D slicer screenshot (e.g., OrcaSlicer/Bambu Studio). Extract the print time and weights. Set modelWeight to the total model weight, flushedWeight to the total flushed weight, towerWeight to the total tower weight, and supportWeight to the total support weight (if available). Set totalSlicerWeight to the absolute Total weight. Convert the 'Total time' into baseHours, baseMinutes, and baseSeconds. ALSO extract the individual filaments used from the table. For each filament, provide a 'name' (e.g. 'Filament 1'), 'usedWeight' (the Total weight for that specific filament in grams), and 'colorHex' (estimate the hex code from the color square, default to #888888). Return valid JSON." },
+              { inlineData: { mimeType: file.type, data: base64Data } }
+            ]
+          }],
+          generationConfig: {
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: "OBJECT",
+              properties: {
+                baseHours: { type: "INTEGER" },
+                baseMinutes: { type: "INTEGER" },
+                baseSeconds: { type: "INTEGER" },
+                modelWeight: { type: "NUMBER" },
+                supportWeight: { type: "NUMBER" },
+                flushedWeight: { type: "NUMBER" },
+                towerWeight: { type: "NUMBER" },
+                totalSlicerWeight: { type: "NUMBER" },
+                filaments: {
+                  type: "ARRAY",
+                  items: {
+                    type: "OBJECT",
+                    properties: {
+                      name: { type: "STRING" },
+                      usedWeight: { type: "NUMBER" },
+                      colorHex: { type: "STRING" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        };
+
+        const result = await fetchWithRetry(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const textRes = result.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (textRes) {
+          const data = JSON.parse(textRes);
+          const plate = plates.find(p => p.id === targetPlateId);
+          
+          if(plate) {
+            plate.baseHours = data.baseHours || 0;
+            plate.baseMinutes = data.baseMinutes || 0;
+            plate.baseSeconds = data.baseSeconds || 0;
+            plate.modelWeight = data.modelWeight || 0;
+            plate.supportWeight = data.supportWeight || 0;
+            plate.flushedWeight = data.flushedWeight || 0;
+            plate.towerWeight = data.towerWeight || 0;
+            plate.totalSlicerWeight = data.totalSlicerWeight || 0;
+
+            if (data.filaments && data.filaments.length > 0) {
+              plate.filaments = data.filaments.map((f, i) => {
+                const existing = plate.filaments[i]; 
+                return {
+                  id: Math.random().toString(36).substr(2, 9),
+                  color: f.colorHex || '#888888',
+                  name: f.name || `Filament ${i + 1}`,
+                  price: existing ? existing.price : 0, 
+                  spoolWeight: existing ? existing.spoolWeight : 1000, 
+                  usedWeight: f.usedWeight || 0
+                };
+              });
+            }
+
+            if (data.modelWeight > 0 || data.flushedWeight > 0 || data.towerWeight > 0) {
+              plate.weightInputMode = 'detailed';
+            } else {
+              plate.weightInputMode = 'simple';
+            }
+
+            renderPlates();
+            updateMetrics();
+          }
+        }
+      } catch (error) {
+        console.error("AI Scan failed:", error);
+        btn.innerHTML = `<i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i> Error (Check Key)`;
+        lucide.createIcons();
+        setTimeout(() => {
+           btn.innerHTML = originalText;
+           btn.disabled = false;
+           lucide.createIcons();
+        }, 3000);
+        return;
+      }
+      
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+      lucide.createIcons();
+      event.target.value = ''; 
+    }
+
+    // --- Invoice System Functions ---
+    function openInvoiceModal() {
+      // Sync dynamic text values into the preview template sheet
+      document.getElementById('invoice-id-display').innerText = document.getElementById('invoiceNumInput').value ? '#' + document.getElementById('invoiceNumInput').value : '#INV';
+      document.getElementById('invoice-client-display').innerText = document.getElementById('clientNameInput').value || '-';
+      document.getElementById('invoice-project-display').innerText = document.getElementById('projectNameInput').value || '-';
+
+      const today = new Date();
+      document.getElementById('invoice-date-display').innerText = 'Date: ' + today.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+
+      // Apply App Metrics to invoice
+      document.getElementById('invoice-time-display').innerText = formatTime(appMetrics.totalBaseTimeMins);
+      document.getElementById('invoice-postproc-display').innerText = bizSettings.postProcMins + 'm';
+      document.getElementById('invoice-weight-display').innerText = Number(appMetrics.grandSlicerWeight.toFixed(2)) + ' g';
+
+      // 1. Build Filament Consumption Table Inside Invoice
+      const filamentTable = document.getElementById('invoice-filaments-rows');
+      let filamentRowsHTML = '';
+      
+      plates.forEach(p => {
+        p.filaments.forEach(f => {
+          if (f.usedWeight > 0) {
+             filamentRowsHTML += `
+               <tr class="border-b border-slate-100 text-slate-800">
+                 <td class="p-2 py-3 font-medium flex items-center gap-1.5 rounded-l-md">
+                   <span class="w-3 h-3 rounded-full border border-slate-300 block shadow-sm flex-shrink-0" style="background-color: ${f.color}"></span>
+                   <span class="text-slate-400 font-normal mr-1">[${p.name}]</span> ${f.name}
+                 </td>
+                 <td class="p-2 py-3 text-right font-semibold rounded-r-md">${Number(f.usedWeight.toFixed(2))}g</td>
+               </tr>
+             `;
+          }
+        });
+      });
+      filamentTable.innerHTML = filamentRowsHTML;
+
+      document.getElementById('invoice-retail-rate-display').innerText = formatCurrency(appMetrics.retailRatePerGram) + ' / g';
+
+      // 2. Build Other Materials Table
+      const partsTable = document.getElementById('invoice-parts-rows');
+      partsTable.innerHTML = '';
+      otherMaterials.forEach(m => {
+        const lineCost = m.price * m.quantity;
+        const tr = document.createElement('tr');
+        tr.className = 'border-b border-slate-100 text-slate-800';
+        tr.innerHTML = `
+          <td class="p-2 py-3 font-medium">${m.name}</td>
+          <td class="p-2 py-3 text-right">${formatCurrency(m.price)}</td>
+          <td class="p-2 py-3 text-right font-semibold">${m.quantity}</td>
+          <td class="p-2 py-3 text-right font-bold text-slate-900">${formatCurrency(lineCost)}</td>
+        `;
+        partsTable.appendChild(tr);
+      });
+
+      // 3. Final Transparent Totals
+      document.getElementById('invoice-calc-weight').innerText = Number(appMetrics.grandSlicerWeight.toFixed(2));
+      document.getElementById('invoice-calc-rate').innerText = formatCurrency(appMetrics.retailRatePerGram);
+      document.getElementById('invoice-filament-subtotal-display').innerText = formatCurrency(appMetrics.retailFilamentTotalCost);
+      document.getElementById('invoice-labor-subtotal-display').innerText = formatCurrency(appMetrics.postProcCost);
+      document.getElementById('invoice-parts-subtotal-display').innerText = formatCurrency(appMetrics.otherCost);
+      document.getElementById('invoice-grand-display').innerText = formatCurrency(appMetrics.recommendedPrice);
+
+      document.getElementById('invoice-modal-backdrop').classList.remove('hidden');
+    }
+
+    function closeInvoiceModal() {
+      document.getElementById('invoice-modal-backdrop').classList.add('hidden');
+    }
+
+    function triggerSystemPrint() {
+      const originSheet = document.getElementById('invoice-sheet');
+      const targetPrintContainer = document.getElementById('invoice-print-area');
+      targetPrintContainer.innerHTML = originSheet.outerHTML;
+      window.print();
+    }
+
+    // --- Initialization & Event Binding ---
+    document.addEventListener('DOMContentLoaded', () => {
+      
+      // Bind Global Inputs (Biz Settings)
+      Object.keys(bizSettings).forEach(key => {
+        const el = document.getElementById(key);
+        if (el) {
+          el.value = bizSettings[key];
+          el.addEventListener('input', (e) => {
+            bizSettings[key] = Number(e.target.value) || 0;
+            updateMetrics();
+          });
+        }
+      });
+
+      // Bind Event Delegation for Dynamic Plates Inputs
+      document.getElementById('plates-container').addEventListener('input', (e) => {
+        const plateId = e.target.getAttribute('data-plate-id');
+        const field = e.target.getAttribute('data-field');
+        
+        if (e.target.classList.contains('plate-input')) {
+          const val = field === 'name' ? e.target.value : (Number(e.target.value) || 0);
+          const p = plates.find(p => p.id === plateId);
+          if (p) p[field] = val;
+          updateMetrics();
+        } 
+        else if (e.target.classList.contains('filament-input')) {
+          const filId = e.target.getAttribute('data-filament-id');
+          const val = (field === 'name' || field === 'color') ? e.target.value : (Number(e.target.value) || 0);
+          const p = plates.find(p => p.id === plateId);
+          if (p) {
+            const fil = p.filaments.find(f => f.id === filId);
+            if (fil) fil[field] = val;
+          }
+          updateMetrics();
+        }
+      });
+
+      // Bind Dynamic Other Material Inputs
+      document.getElementById('other-materials-container').addEventListener('input', (e) => {
+        if (e.target.classList.contains('other-material-input')) {
+          const id = e.target.getAttribute('data-id');
+          const field = e.target.getAttribute('data-field');
+          let val = e.target.value;
+          if (['price', 'quantity'].includes(field)) val = Number(val) || 0;
+          const item = otherMaterials.find(m => m.id === id);
+          if (item) item[field] = val;
+          updateMetrics();
+        }
+      });
+
+      // Bind Invoice Inputs live sync
+      document.getElementById('invoiceNumInput').addEventListener('input', (e) => {
+        document.getElementById('invoice-id-display').innerText = e.target.value ? '#' + e.target.value : '#INV';
+      });
+      document.getElementById('projectNameInput').addEventListener('input', (e) => {
+        document.getElementById('invoice-project-display').innerText = e.target.value ? e.target.value : '-';
+      });
+      document.getElementById('clientNameInput').addEventListener('input', (e) => {
+        document.getElementById('invoice-client-display').innerText = e.target.value ? e.target.value : '-';
+      });
+
+      // Initial Render
+      renderPlates();
+      renderOtherMaterials();
+      updateMetrics();
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>

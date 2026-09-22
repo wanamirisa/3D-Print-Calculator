@@ -1,3 +1,4 @@
+<!-- 3D Print Calculator - Version 1.1.0 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,7 +16,7 @@
   <style>
     @media print {
       /* Hide all interactive elements */
-      #calculator-app, #invoice-modal-backdrop, #profiles-modal-backdrop, #settings-modal-backdrop, .modal-control-buttons {
+      #calculator-app, #invoice-modal-backdrop, #profiles-modal-backdrop, #settings-modal-backdrop, .modal-control-buttons, footer {
         display: none !important;
       }
       /* Clean white background and show only printable invoice */
@@ -39,7 +40,7 @@
     }
   </style>
 </head>
-<body class="min-h-screen bg-slate-100 text-slate-900 p-4 md:p-6 font-sans pb-20">
+<body class="min-h-screen bg-slate-100 text-slate-900 p-4 md:p-6 font-sans">
 
   <!-- Interactive Application Wrapper -->
   <div id="calculator-app" class="max-w-7xl mx-auto space-y-6">
@@ -51,14 +52,20 @@
           <div class="p-2.5 bg-blue-600 text-white rounded-xl shadow-sm">
             <i data-lucide="printer" class="w-6 h-6"></i>
           </div>
-          <h1 class="text-2xl font-bold tracking-tight text-slate-800">3D Print Calculator</h1>
+          <div class="flex items-center gap-2">
+            <h1 class="text-2xl font-bold tracking-tight text-slate-800">3D Print Calculator</h1>
+            <span class="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider shadow-sm border border-blue-200">v1.1.0</span>
+          </div>
         </div>
-        <div class="flex items-center gap-3 mt-2 ml-1">
+        <div class="flex flex-wrap items-center gap-2 mt-2 ml-1">
           <p class="text-slate-500 text-sm hidden lg:block mr-2">Advanced quoting with filament, post-processing labor, and hardware tracking.</p>
-          <button onclick="openProfilesModal()" class="text-xs bg-white border border-slate-200 px-3 py-1.5 rounded-lg flex items-center gap-2 hover:bg-slate-50 transition shadow-sm text-slate-700 font-semibold">
+          <a href="https://github.com/wanamirisa/3D-Print-Calculator" target="_blank" class="text-xs bg-slate-800 text-white border border-slate-700 px-3 py-1.5 rounded-lg flex items-center gap-1.5 hover:bg-slate-700 transition shadow-sm font-semibold" title="View Source on GitHub">
+            <i data-lucide="github" class="w-3.5 h-3.5"></i> Source
+          </a>
+          <button onclick="openProfilesModal()" class="text-xs bg-white border border-slate-200 px-3 py-1.5 rounded-lg flex items-center gap-1.5 hover:bg-slate-50 transition shadow-sm text-slate-700 font-semibold">
             <i data-lucide="library" class="w-3.5 h-3.5 text-blue-600"></i> Filament Profiles
           </button>
-          <button onclick="openSettingsModal()" class="text-xs bg-white border border-slate-200 px-3 py-1.5 rounded-lg flex items-center gap-2 hover:bg-slate-50 transition shadow-sm text-slate-700 font-semibold" title="Settings & API Key">
+          <button onclick="openSettingsModal()" class="text-xs bg-white border border-slate-200 px-3 py-1.5 rounded-lg flex items-center gap-1.5 hover:bg-slate-50 transition shadow-sm text-slate-700 font-semibold" title="Settings & API Key">
             <i data-lucide="settings" class="w-3.5 h-3.5 text-slate-500"></i> Settings
           </button>
         </div>
@@ -310,7 +317,7 @@
     </div>
   </div>
 
-  <!-- FILAMENT PROFILES MODAL -->
+  <!-- FILAMENT PROFILES MODAL (Read-Only) -->
   <div id="profiles-modal-backdrop" class="fixed inset-0 bg-slate-900/60 hidden z-50 overflow-y-auto p-4 md:p-6 backdrop-blur-sm flex items-center justify-center">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
       <div class="bg-slate-100 p-4 border-b border-slate-200 flex justify-between items-center">
@@ -324,59 +331,17 @@
       </div>
       <div class="flex-1 overflow-y-auto p-6 bg-slate-50/50 flex flex-col gap-6">
         
-        <!-- Add New Profile Form -->
-        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-          <h3 class="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2"><i data-lucide="plus-circle" class="w-4 h-4 text-emerald-500"></i> Save New Profile</h3>
-          <div class="grid grid-cols-2 md:grid-cols-6 gap-3 items-end">
-            <div class="col-span-2 md:col-span-2">
-              <label class="text-[10px] font-semibold text-slate-500 uppercase block mb-1">Filament Name</label>
-              <input type="text" id="new-prof-name" placeholder="e.g. Bambu Basic" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500">
-            </div>
-            <div>
-              <label class="text-[10px] font-semibold text-slate-500 uppercase block mb-1">Type</label>
-              <select id="new-prof-type" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500">
-                <option value="PLA">PLA</option>
-                <option value="PLA+">PLA+</option>
-                <option value="PETG">PETG</option>
-                <option value="PETG+">PETG+</option>
-                <option value="ABS">ABS</option>
-                <option value="TPU">TPU</option>
-                <option value="ASA">ASA</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-            <div>
-              <label class="text-[10px] font-semibold text-slate-500 uppercase block mb-1">Finish</label>
-              <select id="new-prof-finish" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500">
-                <option value="Standard">Standard</option>
-                <option value="Matte">Matte</option>
-                <option value="Gloss">Gloss</option>
-                <option value="Shiny">Shiny</option>
-                <option value="Silk">Silk</option>
-                <option value="Carbon Fiber">Carbon Fiber</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-            <div>
-              <label class="text-[10px] font-semibold text-slate-500 uppercase block mb-1">Price (RM)</label>
-              <input type="number" id="new-prof-price" placeholder="85" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500">
-            </div>
-            <div>
-              <label class="text-[10px] font-semibold text-slate-500 uppercase block mb-1">Spool (g)</label>
-              <input type="number" id="new-prof-weight" value="1000" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500">
-            </div>
-          </div>
-          <div class="flex justify-end items-center mt-3 pt-3 border-t border-slate-100">
-             <button onclick="saveNewProfile()" class="bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold px-4 py-2 rounded-lg transition flex items-center gap-1 shadow-sm">
-               <i data-lucide="save" class="w-3.5 h-3.5"></i> Save Profile
-             </button>
-          </div>
-        </div>
-
-        <!-- Saved Profiles List -->
         <div>
-          <h3 class="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2"><i data-lucide="list" class="w-4 h-4 text-slate-400"></i> Your Saved Profiles</h3>
-          <div id="profiles-list-container" class="space-y-2 max-h-[300px] overflow-y-auto pr-2">
+          <h3 class="text-sm font-bold text-slate-800 mb-3 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i data-lucide="cloud-download" class="w-4 h-4 text-blue-500"></i> Global Cloud Profiles
+            </div>
+            <button onclick="loadExternalProfiles()" class="text-xs bg-white text-slate-600 border border-slate-200 px-2 py-1 rounded hover:bg-slate-50 transition shadow-sm flex items-center gap-1">
+              <i data-lucide="refresh-cw" class="w-3 h-3"></i> Refresh
+            </button>
+          </h3>
+          <p class="text-xs text-slate-500 mb-4">These profiles are managed centrally via GitHub and sync automatically.</p>
+          <div id="profiles-list-container" class="space-y-2 max-h-[400px] overflow-y-auto pr-2">
             <!-- Rendered via JS -->
           </div>
         </div>
@@ -543,23 +508,16 @@
     <!-- Copy of #invoice-sheet will be deep cloned here during printing -->
   </div>
 
+  <!-- Page Footer -->
+  <footer class="max-w-7xl mx-auto mt-8 mb-4 text-center text-slate-400 text-xs px-4">
+    <p>3D Print Calculator v1.1.0 &copy; 2026. <a href="https://github.com/wanamirisa/3D-Print-Calculator" target="_blank" class="hover:text-blue-500 underline transition">View source on GitHub</a>.</p>
+  </footer>
+
   <script>
     // --- Application State ---
     
-    // REPLACE THIS URL with your Raw GitHub URL later!
-    const EXTERNAL_PROFILES_URL = ""; 
-
-    let savedProfiles = JSON.parse(localStorage.getItem('3dCalcFilamentProfiles')) || [];
-    
-    // Fallback defaults in case user has no local profiles and the JSON link is empty
-    const defaultProfiles = [
-      { id: 'def1', name: 'Generic PLA', type: 'PLA', finish: 'Standard', price: 65, weight: 1000 },
-      { id: 'def2', name: 'Generic PETG', type: 'PETG', finish: 'Standard', price: 70, weight: 1000 }
-    ];
-
-    if (savedProfiles.length === 0) {
-      savedProfiles = [...defaultProfiles];
-    }
+    const EXTERNAL_PROFILES_URL = "https://raw.githubusercontent.com/wanamirisa/3D-Print-Calculator/refs/heads/main/filaments.json"; 
+    let savedProfiles = []; // Exclusively loaded from JSON
 
     let plates = [
       {
@@ -601,6 +559,30 @@
       parts.push(`${s}s`);
       return parts.join(' ') || '0s';
     };
+
+    // --- Fetch External JSON Profiles ---
+    async function loadExternalProfiles() {
+      const container = document.getElementById('profiles-list-container');
+      if (container) container.innerHTML = `<div class="text-sm text-slate-400 text-center py-4"><i data-lucide="loader-2" class="w-4 h-4 animate-spin inline mr-2"></i> Syncing...</div>`;
+      lucide.createIcons();
+      
+      try {
+        // Appending timestamp to strictly bypass Github & Browser cache
+        const cacheBuster = '?t=' + new Date().getTime();
+        const response = await fetch(EXTERNAL_PROFILES_URL + cacheBuster, { cache: "no-store" });
+        
+        if (response.ok) {
+          savedProfiles = await response.json();
+          renderProfilesList();
+          renderPlates(); // Refresh dropdowns on main view
+        } else {
+          throw new Error('Network response was not ok');
+        }
+      } catch (error) {
+        console.error("Failed to load profiles from GitHub:", error);
+        if (container) container.innerHTML = `<div class="text-sm text-red-500 text-center py-4">Failed to load profiles. Check your GitHub JSON link.</div>`;
+      }
+    }
 
     // --- DOM Update Engine ---
     function updateMetrics() {
@@ -704,8 +686,6 @@
       setInnerText('metric-total-cost', formatCurrency(filamentCost + otherCost + postProcCost + filamentRiskCost));
       setInnerText('metric-profit-margin', formatCurrency(filamentMarkupCost));
 
-      // The missing metric IDs are now handled safely by the helper function, 
-      // preventing the "TypeError: Cannot set properties of null" error
       setInnerText('metric-model-weight', Number(grandModelWeight.toFixed(2)));
       setInnerText('metric-support-weight', Number(grandSupportWeight.toFixed(2)));
       setInnerText('metric-flushed-weight', Number(grandFlushedWeight.toFixed(2)));
@@ -940,7 +920,24 @@
       updateMetrics();
     }
 
-    // --- Filament Profiles Management ---
+    // --- API Key & Settings ---
+    function openSettingsModal() {
+      const storedKey = localStorage.getItem('3dCalcGeminiKey') || '';
+      document.getElementById('settings-api-key').value = storedKey;
+      document.getElementById('settings-modal-backdrop').classList.remove('hidden');
+    }
+
+    function closeSettingsModal() {
+      document.getElementById('settings-modal-backdrop').classList.add('hidden');
+    }
+
+    function saveSettings() {
+      const key = document.getElementById('settings-api-key').value.trim();
+      localStorage.setItem('3dCalcGeminiKey', key);
+      closeSettingsModal();
+    }
+
+    // --- Filament Profiles View Modal ---
     function openProfilesModal() {
       document.getElementById('profiles-modal-backdrop').classList.remove('hidden');
       renderProfilesList();
@@ -950,57 +947,25 @@
       document.getElementById('profiles-modal-backdrop').classList.add('hidden');
     }
 
-    function saveNewProfile() {
-      const name = document.getElementById('new-prof-name').value;
-      const type = document.getElementById('new-prof-type').value;
-      const finish = document.getElementById('new-prof-finish').value;
-      const price = Number(document.getElementById('new-prof-price').value) || 0;
-      const weight = Number(document.getElementById('new-prof-weight').value) || 1000;
-      
-      if (!name) return; // Basic validation
-
-      const newProf = {
-        id: Math.random().toString(36).substr(2, 9),
-        name, type, finish, price, weight
-      };
-      
-      savedProfiles.push(newProf);
-      localStorage.setItem('3dCalcFilamentProfiles', JSON.stringify(savedProfiles));
-      
-      // Reset form
-      document.getElementById('new-prof-name').value = '';
-      document.getElementById('new-prof-price').value = '';
-      document.getElementById('new-prof-finish').value = 'Standard';
-      
-      renderProfilesList();
-      renderPlates(); // Refresh dropdowns in main view
-    }
-
-    function deleteProfile(id) {
-      savedProfiles = savedProfiles.filter(p => p.id !== id);
-      localStorage.setItem('3dCalcFilamentProfiles', JSON.stringify(savedProfiles));
-      renderProfilesList();
-      renderPlates(); // Refresh dropdowns in main view
-    }
-
     function renderProfilesList() {
       const container = document.getElementById('profiles-list-container');
       if (savedProfiles.length === 0) {
-        container.innerHTML = `<div class="text-sm text-slate-400 text-center py-4 italic">No profiles saved yet.</div>`;
+        container.innerHTML = `<div class="text-sm text-slate-400 text-center py-4 italic">No profiles loaded. Ensure your GitHub JSON link is correct.</div>`;
         return;
       }
 
       container.innerHTML = savedProfiles.map(p => `
-        <div class="flex justify-between items-center bg-white p-3 rounded-xl border border-slate-200 shadow-sm hover:border-blue-200 transition">
+        <div class="flex justify-between items-center bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
           <div class="flex items-center gap-3">
+             <div class="flex items-center justify-center w-6 h-6 rounded bg-blue-50 text-blue-500 shadow-sm border border-blue-100">
+               <i data-lucide="cloud" class="w-3.5 h-3.5"></i>
+             </div>
              <div>
                <p class="text-sm font-bold text-slate-800">${p.name} <span class="text-[10px] bg-blue-50 text-blue-600 border border-blue-100 px-1.5 py-0.5 rounded ml-1 uppercase">${p.type}</span> <span class="text-[10px] bg-slate-100 text-slate-500 border border-slate-200 px-1.5 py-0.5 rounded ml-1 uppercase">${p.finish || 'Standard'}</span></p>
                <p class="text-xs text-slate-500 font-medium mt-0.5">RM ${p.price.toFixed(2)} / ${p.weight}g</p>
              </div>
           </div>
-          <button onclick="deleteProfile('${p.id}')" class="text-slate-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition" title="Delete Profile">
-            <i data-lucide="trash-2" class="w-4 h-4"></i>
-          </button>
+          <span class="text-[9px] font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded uppercase tracking-wider">Global</span>
         </div>
       `).join('');
       lucide.createIcons();
@@ -1017,7 +982,7 @@
         fil.name = prof.name + finishText;
         fil.price = prof.price;
         fil.spoolWeight = prof.weight;
-        // Notice we purposely DO NOT overwrite fil.color here to preserve slicer color selection
+        // User color selection stays untouched
         renderPlates();
         updateMetrics();
       }
@@ -1038,26 +1003,16 @@
       }
     }
 
-    // Settings Modal functionality for API Key
-    function openSettingsModal() {
-      const storedKey = localStorage.getItem('3dCalcGeminiKey') || '';
-      document.getElementById('settings-api-key').value = storedKey;
-      document.getElementById('settings-modal-backdrop').classList.remove('hidden');
-    }
-
-    function closeSettingsModal() {
-      document.getElementById('settings-modal-backdrop').classList.add('hidden');
-    }
-
-    function saveSettings() {
-      const key = document.getElementById('settings-api-key').value.trim();
-      localStorage.setItem('3dCalcGeminiKey', key);
-      closeSettingsModal();
-    }
-
     async function handleSlicerUpload(event, targetPlateId) {
       const file = event.target.files[0];
       if (!file) return;
+
+      const apiKey = localStorage.getItem('3dCalcGeminiKey') || "";
+      if (!apiKey) {
+        openSettingsModal();
+        event.target.value = ''; 
+        return;
+      }
 
       const btn = document.getElementById(`ai-scan-btn-${targetPlateId}`);
       const originalText = btn.innerHTML;
@@ -1072,17 +1027,14 @@
           reader.readAsDataURL(file);
         });
 
-        // Use the saved API key, OR if it's empty let the Canvas environment auto-inject it
-        const apiKey = localStorage.getItem('3dCalcGeminiKey') || ""; 
-        
-        // Using gemini-3-flash-preview for structured image understanding output
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+        // Safe, stable model endpoint
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
         
         const payload = {
           contents: [{
             role: "user",
             parts: [
-              { text: "Analyze this 3D slicer screenshot (e.g., OrcaSlicer/Bambu Studio). Extract the print time and weights. Set modelWeight to the total model weight, flushedWeight to the total flushed weight, towerWeight to the total tower weight, and supportWeight to the total support weight (if available). Set totalSlicerWeight to the absolute Total weight. Convert the 'Total time' into baseHours, baseMinutes, and baseSeconds. ALSO extract the individual filaments used from the table. For each filament, provide a 'name' (e.g. 'Filament 1'), 'usedWeight' (the Total weight for that specific filament in grams), and 'colorHex' (estimate the hex code from the color square, default to #888888)." },
+              { text: "Analyze this 3D slicer screenshot (e.g., OrcaSlicer/Bambu Studio). Extract the print time and weights. Set modelWeight to the total model weight, flushedWeight to the total flushed weight, towerWeight to the total tower weight, and supportWeight to the total support weight (if available). Set totalSlicerWeight to the absolute Total weight. Convert the 'Total time' into baseHours, baseMinutes, and baseSeconds. ALSO extract the individual filaments used from the table. For each filament, provide a 'name' (e.g. 'Filament 1'), 'usedWeight' (the Total weight for that specific filament in grams), and 'colorHex' (estimate the hex code from the color square, default to #888888). Return valid JSON." },
               { inlineData: { mimeType: file.type, data: base64Data } }
             ]
           }],
@@ -1159,13 +1111,10 @@
             renderPlates();
             updateMetrics();
           }
-        } else if (!apiKey) {
-           // If user provided no key and environment did not handle it
-           openSettingsModal();
         }
       } catch (error) {
         console.error("AI Scan failed:", error);
-        btn.innerHTML = `<i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i> Error (Check Key)`;
+        btn.innerHTML = `<i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i> API Error`;
         lucide.createIcons();
         setTimeout(() => {
            btn.innerHTML = originalText;
@@ -1260,6 +1209,9 @@
     // --- Initialization & Event Binding ---
     document.addEventListener('DOMContentLoaded', () => {
       
+      // Load external JSON profiles dynamically
+      loadExternalProfiles();
+
       // Bind Global Inputs (Biz Settings)
       Object.keys(bizSettings).forEach(key => {
         const el = document.getElementById(key);

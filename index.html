@@ -545,10 +545,21 @@
 
   <script>
     // --- Application State ---
-    let savedProfiles = JSON.parse(localStorage.getItem('3dCalcFilamentProfiles')) || [
+    
+    // REPLACE THIS URL with your Raw GitHub URL later!
+    const EXTERNAL_PROFILES_URL = ""; 
+
+    let savedProfiles = JSON.parse(localStorage.getItem('3dCalcFilamentProfiles')) || [];
+    
+    // Fallback defaults in case user has no local profiles and the JSON link is empty
+    const defaultProfiles = [
       { id: 'def1', name: 'Generic PLA', type: 'PLA', finish: 'Standard', price: 65, weight: 1000 },
       { id: 'def2', name: 'Generic PETG', type: 'PETG', finish: 'Standard', price: 70, weight: 1000 }
     ];
+
+    if (savedProfiles.length === 0) {
+      savedProfiles = [...defaultProfiles];
+    }
 
     let plates = [
       {
@@ -977,19 +988,32 @@
         return;
       }
 
-      container.innerHTML = savedProfiles.map(p => `
+      container.innerHTML = savedProfiles.map(p => {
+        // Tag external profiles with a small "Cloud" label so users know it came from the database
+        const isExternal = p.id.startsWith('ext'); 
+        
+        return `
         <div class="flex justify-between items-center bg-white p-3 rounded-xl border border-slate-200 shadow-sm hover:border-blue-200 transition">
           <div class="flex items-center gap-3">
              <div>
-               <p class="text-sm font-bold text-slate-800">${p.name} <span class="text-[10px] bg-blue-50 text-blue-600 border border-blue-100 px-1.5 py-0.5 rounded ml-1 uppercase">${p.type}</span> <span class="text-[10px] bg-slate-100 text-slate-500 border border-slate-200 px-1.5 py-0.5 rounded ml-1 uppercase">${p.finish || 'Standard'}</span></p>
-               <p class="text-xs text-slate-500 font-medium mt-0.5">RM ${p.price.toFixed(2)} / ${p.weight}g</p>
+               <p class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                  ${p.name} 
+                  ${isExternal ? '<i data-lucide="cloud" class="w-3 h-3 text-blue-400" title="Global Database Item"></i>' : ''}
+               </p>
+               <div class="mt-0.5">
+                 <span class="text-[10px] bg-blue-50 text-blue-600 border border-blue-100 px-1.5 py-0.5 rounded uppercase">${p.type}</span> 
+                 <span class="text-[10px] bg-slate-100 text-slate-500 border border-slate-200 px-1.5 py-0.5 rounded uppercase">${p.finish || 'Standard'}</span>
+               </div>
+               <p class="text-xs text-slate-500 font-medium mt-1">RM ${p.price.toFixed(2)} / ${p.weight}g</p>
              </div>
           </div>
+          ${!isExternal ? `
           <button onclick="deleteProfile('${p.id}')" class="text-slate-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition" title="Delete Profile">
             <i data-lucide="trash-2" class="w-4 h-4"></i>
           </button>
+          ` : '<span class="text-[9px] text-slate-400 font-bold uppercase tracking-wider mr-2">Global</span>'}
         </div>
-      `).join('');
+      `}).join('');
       lucide.createIcons();
     }
 
@@ -1243,9 +1267,35 @@
       targetPrintContainer.innerHTML = originSheet.outerHTML;
       window.print();
     }
+    
+    // --- External JSON Fetcher ---
+    async function loadExternalProfiles() {
+      if (!EXTERNAL_PROFILES_URL) return;
+      
+      try {
+        const response = await fetch(EXTERNAL_PROFILES_URL);
+        if (response.ok) {
+          const externalData = await response.json();
+          
+          // Get user's local custom profiles
+          const localData = JSON.parse(localStorage.getItem('3dCalcFilamentProfiles')) || [];
+          
+          // Combine them (External first, then user's local additions)
+          savedProfiles = [...externalData, ...localData];
+          
+          renderProfilesList();
+          renderPlates(); // Update dropdown menus
+        }
+      } catch (error) {
+        console.warn("Could not load external filament database:", error);
+      }
+    }
 
     // --- Initialization & Event Binding ---
     document.addEventListener('DOMContentLoaded', () => {
+      
+      // Fetch external profiles if URL is provided
+      loadExternalProfiles();
       
       // Bind Global Inputs (Biz Settings)
       Object.keys(bizSettings).forEach(key => {

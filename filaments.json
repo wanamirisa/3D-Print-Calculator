@@ -1,0 +1,18 @@
+[
+  {
+    "id": "ext1",
+    "name": "Bambu Basic",
+    "type": "PLA",
+    "finish": "Standard",
+    "price": 85,
+    "weight": 1000
+  },
+  {
+    "id": "ext2",
+    "name": "Sunlu Silk",
+    "type": "PLA",
+    "finish": "Silk",
+    "price": 65,
+    "weight": 1000
+  }
+]

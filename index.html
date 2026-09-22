@@ -1,6 +1,6 @@
-<!-- 3D Print Calculator - Version 1.1.0 -->
+<!-- 3D Print Calculator - Version 1.2.0 -->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="transition-colors duration-200">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,12 +8,41 @@
   
   <!-- Tailwind CSS for styling -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+    }
+  </script>
   
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <!-- Custom print overriding CSS -->
   <style>
+    /* Dark Mode Global Overrides to cleanly theme the entire app */
+    html.dark body { background-color: #0f172a !important; color: #f1f5f9 !important; }
+    html.dark .bg-white { background-color: #1e293b !important; border-color: #334155 !important; }
+    html.dark .bg-slate-50, html.dark .bg-slate-100 { background-color: #0f172a !important; border-color: #334155 !important; }
+    html.dark .text-slate-900, html.dark .text-slate-800 { color: #f8fafc !important; }
+    html.dark .text-slate-700, html.dark .text-slate-600 { color: #cbd5e1 !important; }
+    html.dark .text-slate-500, html.dark .text-slate-400 { color: #94a3b8 !important; }
+    html.dark input[type="text"], html.dark input[type="number"], html.dark input[type="password"], html.dark select {
+      background-color: #0f172a !important; color: #f8fafc !important; border-color: #334155 !important;
+    }
+    
+    html.dark .bg-blue-100, html.dark .bg-blue-50 { background-color: #172554 !important; border-color: #1e3a8a !important; color: #bfdbfe !important; }
+    html.dark .text-blue-600, html.dark .text-blue-700, html.dark .text-blue-900 { color: #93c5fd !important; }
+    html.dark .bg-indigo-50 { background-color: #312e81 !important; border-color: #4338ca !important; }
+    html.dark .text-indigo-900, html.dark .text-indigo-700 { color: #a5b4fc !important; }
+    html.dark .bg-rose-50 { background-color: #4c0519 !important; border-color: #9f1239 !important; }
+    html.dark .text-rose-900, html.dark .text-rose-800, html.dark .text-rose-500 { color: #fda4af !important; }
+    html.dark .bg-amber-50 { background-color: #451a03 !important; border-color: #b45309 !important; }
+    html.dark .text-amber-900, html.dark .text-amber-600 { color: #fcd34d !important; }
+    
+    html.dark .border-slate-200 { border-color: #334155 !important; }
+    html.dark .border-slate-300 { border-color: #475569 !important; }
+    html.dark .modal-control-buttons { background-color: #0f172a !important; border-color: #334155 !important; }
+
     @media print {
       /* Hide all interactive elements */
       #calculator-app, #invoice-modal-backdrop, #profiles-modal-backdrop, #settings-modal-backdrop, .modal-control-buttons, footer {
@@ -54,11 +83,16 @@
           </div>
           <div class="flex items-center gap-2">
             <h1 class="text-2xl font-bold tracking-tight text-slate-800">3D Print Calculator</h1>
-            <span class="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider shadow-sm border border-blue-200">v1.1.0</span>
+            <span class="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider shadow-sm border border-blue-200">v1.2.0</span>
           </div>
         </div>
         <div class="flex flex-wrap items-center gap-2 mt-2 ml-1">
           <p class="text-slate-500 text-sm hidden lg:block mr-2">Advanced quoting with filament, post-processing labor, and hardware tracking.</p>
+          <button onclick="toggleDarkMode()" class="text-xs bg-slate-800 text-slate-100 border border-slate-700 px-3 py-1.5 rounded-lg flex items-center gap-1.5 hover:bg-slate-700 transition shadow-sm font-semibold dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200">
+            <i data-lucide="moon" class="w-3.5 h-3.5 dark:hidden"></i>
+            <i data-lucide="sun" class="w-3.5 h-3.5 hidden dark:block"></i>
+            <span class="dark:hidden">Dark</span><span class="hidden dark:inline">Light</span>
+          </button>
           <a href="https://github.com/wanamirisa/3D-Print-Calculator" target="_blank" class="text-xs bg-slate-800 text-white border border-slate-700 px-3 py-1.5 rounded-lg flex items-center gap-1.5 hover:bg-slate-700 transition shadow-sm font-semibold" title="View Source on GitHub">
             <i data-lucide="github" class="w-3.5 h-3.5"></i> Source
           </a>
@@ -510,11 +544,24 @@
 
   <!-- Page Footer -->
   <footer class="max-w-7xl mx-auto mt-8 mb-4 text-center text-slate-400 text-xs px-4">
-    <p>3D Print Calculator v1.1.0 &copy; 2026. <a href="https://github.com/wanamirisa/3D-Print-Calculator" target="_blank" class="hover:text-blue-500 underline transition">View source on GitHub</a>.</p>
+    <p>3D Print Calculator v1.2.0 &copy; 2026. <a href="https://github.com/wanamirisa/3D-Print-Calculator" target="_blank" class="hover:text-blue-500 underline transition">View source on GitHub</a>.</p>
   </footer>
 
   <script>
     // --- Application State ---
+    
+    // --- Dark Mode Logic ---
+    function toggleDarkMode() {
+      document.documentElement.classList.toggle('dark');
+      const isDark = document.documentElement.classList.contains('dark');
+      localStorage.setItem('3dCalcDarkMode', isDark ? 'true' : 'false');
+    }
+
+    // Initialize dark mode based on saved preference or OS preference
+    if (localStorage.getItem('3dCalcDarkMode') === 'true' || 
+        (!('3dCalcDarkMode' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    }
     
     const EXTERNAL_PROFILES_URL = "https://raw.githubusercontent.com/wanamirisa/3D-Print-Calculator/refs/heads/main/filaments.json"; 
     let savedProfiles = []; // Exclusively loaded from JSON

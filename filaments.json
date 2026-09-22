@@ -30,5 +30,21 @@
     "finish": "Basic",
     "price": 35,
     "weight": 1000
+  },
+  {
+    "id": "ext5",
+    "name": "eSUN",
+    "type": "PLA+",
+    "finish": "Basic",
+    "price": 59,
+    "weight": 1000
+  },
+  {
+    "id": "ext6",
+    "name": "Smith3D",
+    "type": "TPU-95A",
+    "finish": "Basic",
+    "price": 42,
+    "weight": 500
   }
 ]

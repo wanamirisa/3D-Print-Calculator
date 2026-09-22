@@ -16,7 +16,7 @@
     "weight": 1000
   },
   {
-    "id": "ext2",
+    "id": "ext3",
     "name": "H3D",
     "type": "PLA",
     "finish": "Basic",
@@ -24,7 +24,7 @@
     "weight": 1000
   },
   {
-    "id": "ext2",
+    "id": "ext4",
     "name": "H3D",
     "type": "PETG",
     "finish": "Basic",

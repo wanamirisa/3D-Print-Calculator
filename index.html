@@ -547,7 +547,7 @@
     // --- Application State ---
     
     // REPLACE THIS URL with your Raw GitHub URL later!
-    const EXTERNAL_PROFILES_URL = "https://raw.githubusercontent.com/wanamirisa/3D-Print-Calculator/refs/heads/main/filaments.json"; 
+    const EXTERNAL_PROFILES_URL = ""; 
 
     let savedProfiles = JSON.parse(localStorage.getItem('3dCalcFilamentProfiles')) || [];
     
@@ -1273,7 +1273,10 @@
       if (!EXTERNAL_PROFILES_URL) return;
       
       try {
-        const response = await fetch(EXTERNAL_PROFILES_URL);
+        // Add a unique timestamp to force the browser to get the newest file, ignoring the cache
+        const cacheBuster = '?t=' + new Date().getTime();
+        const response = await fetch(EXTERNAL_PROFILES_URL + cacheBuster);
+        
         if (response.ok) {
           const externalData = await response.json();
           

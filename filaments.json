@@ -33,6 +33,14 @@
   },
   {
     "id": "ext5",
+    "name": "H3D",
+    "type": "PETG-HF",
+    "finish": "Basic",
+    "price": 33,
+    "weight": 1000
+  },
+  {
+    "id": "ext6",
     "name": "eSUN",
     "type": "PLA+",
     "finish": "Basic",
@@ -40,7 +48,7 @@
     "weight": 1000
   },
   {
-    "id": "ext6",
+    "id": "ext7",
     "name": "Smith3D",
     "type": "TPU-95A",
     "finish": "Basic",

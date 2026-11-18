@@ -1,0 +1,5 @@
+[
+  { "id": "pla", "type": "PLA", "pricePerGram": 0.40 },
+  { "id": "plaplus", "type": "PLA+", "pricePerGram": 0.50 },
+  { "id": "petg", "type": "PETG", "pricePerGram": 0.60 }
+]

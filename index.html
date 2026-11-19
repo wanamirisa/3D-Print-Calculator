@@ -1,4 +1,4 @@
-<!-- 3D Print Calculator - Version 1.5.2 -->
+<!-- 3D Print Calculator - Version 1.6.1 -->
 <!DOCTYPE html>
 <html lang="en" class="transition-colors duration-200">
 <head>
@@ -83,7 +83,7 @@
           </div>
           <div class="flex items-center gap-2">
             <h1 class="text-2xl font-bold tracking-tight text-slate-800">3D Print Calculator</h1>
-            <span class="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider shadow-sm border border-blue-200">v1.5.2</span>
+            <span class="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider shadow-sm border border-blue-200">v1.6.1</span>
           </div>
         </div>
         <div class="flex flex-wrap items-center gap-2 mt-2 ml-1">
@@ -158,6 +158,27 @@
                 <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Add Another Material
               </button>
             </div>
+
+            <!-- Print Time Inputs for Simplified Mode -->
+            <div class="mt-5 pt-4 border-t border-slate-100">
+              <label class="text-xs font-semibold text-slate-600 flex items-center gap-1.5 mb-2.5">
+                <i data-lucide="clock" class="w-3.5 h-3.5 text-indigo-500"></i> Print Time
+              </label>
+              <div class="grid grid-cols-3 gap-3">
+                <div>
+                  <label class="text-[10px] font-bold text-slate-400 uppercase">Hours</label>
+                  <input type="number" id="simpHours" min="0" value="0" oninput="updateSimplifiedTime('hours', this.value)" class="w-full mt-1 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div>
+                  <label class="text-[10px] font-bold text-slate-400 uppercase">Minutes</label>
+                  <input type="number" id="simpMinutes" min="0" max="59" value="0" oninput="updateSimplifiedTime('minutes', this.value)" class="w-full mt-1 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div>
+                  <label class="text-[10px] font-bold text-slate-400 uppercase">Seconds</label>
+                  <input type="number" id="simpSeconds" min="0" max="59" value="0" oninput="updateSimplifiedTime('seconds', this.value)" class="w-full mt-1 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -206,26 +227,26 @@
             </div>
           </div>
 
-          <!-- Additional Parts & Hardware Card -->
-          <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
-            <div class="flex justify-between items-center mb-4">
-              <h2 class="text-base font-semibold flex items-center gap-2 text-slate-800">
-                <i data-lucide="package" class="w-[18px] h-[18px] text-slate-400"></i> Additional Parts & Hardware (<span id="other-material-count">0</span>)
-              </h2>
-              <button 
-                onclick="handleAddOtherMaterial()"
-                class="flex items-center gap-1 text-xs font-semibold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-lg hover:bg-indigo-100 transition"
-              >
-                <i data-lucide="plus" class="w-[14px] h-[14px]"></i> Add Part
-              </button>
-            </div>
-            
-            <div id="other-materials-container" class="space-y-3">
-              <!-- Dynamic Non-Filament Items Injected Here -->
-            </div>
-          </div>
-
         </div><!-- End Advanced Mode Inputs -->
+
+        <!-- Additional Parts & Hardware Card (Shared across Simplified & Advanced Modes) -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-base font-semibold flex items-center gap-2 text-slate-800">
+              <i data-lucide="package" class="w-[18px] h-[18px] text-slate-400"></i> Additional Parts & Hardware (<span id="other-material-count">0</span>)
+            </h2>
+            <button 
+              onclick="handleAddOtherMaterial()"
+              class="flex items-center gap-1 text-xs font-semibold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-lg hover:bg-indigo-100 transition"
+            >
+              <i data-lucide="plus" class="w-[14px] h-[14px]"></i> Add Part
+            </button>
+          </div>
+          
+          <div id="other-materials-container" class="space-y-3">
+            <!-- Dynamic Non-Filament Items Injected Here -->
+          </div>
+        </div>
 
       </div>
 
@@ -245,12 +266,20 @@
                 <!-- Populated dynamically with numbered material lines -->
               </div>
               <div class="flex justify-between items-center">
-                <span class="text-slate-400">Total Materials</span>
-                <span class="font-bold text-blue-300" id="metric-simp-count">1 item</span>
-              </div>
-              <div class="flex justify-between items-center">
                 <span class="text-slate-400">Total Weight</span>
                 <span class="font-medium" id="metric-simp-weight">0 g</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-slate-400">Print Time</span>
+                <span class="font-medium text-slate-200" id="metric-simp-time">0s</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-slate-400">Filament Subtotal</span>
+                <span class="font-medium text-blue-300" id="metric-simp-material-cost">RM 0.00</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-slate-400">Additional Parts Cost</span>
+                <span class="font-medium text-indigo-300" id="metric-simp-other-cost">RM 0.00</span>
               </div>
             </div>
 
@@ -501,7 +530,10 @@
       <div class="p-6 bg-slate-50/50 border-b border-slate-100 modal-control-buttons grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
           <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Invoice / Reference No.</label>
-          <input type="text" id="invoiceNumInput" value="" placeholder="INV-2026-001" class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm" />
+          <div class="flex items-center bg-white border border-slate-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-blue-500">
+            <span class="px-2.5 py-1.5 bg-slate-100 text-slate-600 text-sm font-bold border-r border-slate-200 select-none">#INV</span>
+            <input type="text" id="invoiceNumInput" value="" placeholder="-2026-001" class="w-full px-2.5 py-1.5 bg-transparent text-sm outline-none" />
+          </div>
         </div>
         <div>
           <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Project Name</label>
@@ -542,12 +574,12 @@
           </div>
 
           <!-- Print Job Summary Stats Panel -->
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8 bg-slate-50 p-4 rounded-xl border border-slate-100">
+          <div id="invoice-stats-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8 bg-slate-50 p-4 rounded-xl border border-slate-100">
             <div>
               <span class="text-xs font-medium text-slate-500">Machine Print Time</span>
               <p class="text-sm font-bold text-slate-800" id="invoice-time-display">0h 0m 0s</p>
             </div>
-            <div>
+            <div id="invoice-postproc-box">
               <span class="text-xs font-medium text-slate-500">Post-Processing Time</span>
               <p class="text-sm font-bold text-slate-800" id="invoice-postproc-display">0m</p>
             </div>
@@ -603,7 +635,7 @@
                 <span>Filament Retail Cost (<span id="invoice-calc-weight">0</span>g × <span id="invoice-calc-rate">RM 0.00</span>):</span>
                 <span id="invoice-filament-subtotal-display" class="font-bold text-slate-700">RM 0.00</span>
               </div>
-              <div class="flex justify-between text-xs text-slate-500 font-medium">
+              <div id="invoice-labor-row" class="flex justify-between text-xs text-slate-500 font-medium">
                 <span>Post-Processing Labor:</span>
                 <span id="invoice-labor-subtotal-display" class="font-bold text-slate-700">RM 0.00</span>
               </div>
@@ -631,16 +663,16 @@
 
   <!-- Page Footer -->
   <footer class="max-w-7xl mx-auto mt-8 mb-4 text-center text-slate-400 text-xs px-4">
-    <p>3D Print Calculator v1.5.2 &copy; 2026. <a href="https://github.com/wanamirisa/3D-Print-Calculator" target="_blank" rel="noopener noreferrer" class="hover:text-blue-500 underline transition">View source on GitHub</a>.</p>
+    <p>3D Print Calculator v1.6.1 &copy; 2026. <a href="https://github.com/wanamirisa/3D-Print-Calculator" target="_blank" rel="noopener noreferrer" class="hover:text-blue-500 underline transition">View source on GitHub</a>.</p>
   </footer>
 
   <script>
-    // --- External GitHub JSON Sources ---
-    const EXTERNAL_TYPES_URL = 'https://raw.githubusercontent.com/wanamirisa/3D-Print-Calculator/refs/heads/main/filament_types.json';
+    // --- External GitHub JSON Endpoints ---
     const EXTERNAL_PROFILES_URL = 'https://raw.githubusercontent.com/wanamirisa/3D-Print-Calculator/refs/heads/main/filaments.json';
+    const EXTERNAL_TYPES_URL = 'https://raw.githubusercontent.com/wanamirisa/3D-Print-Calculator/refs/heads/main/filament_types.json';
 
     // --- Application State ---
-    let calcMode = 'simplified'; // 'simplified' (default) or 'advanced'
+    let calcMode = 'simplified'; // 'simplified' | 'advanced'
 
     let filamentTypes = [
       { id: 'pla', type: 'PLA', pricePerGram: 0.40 },
@@ -652,17 +684,20 @@
       { id: Math.random().toString(36).substr(2, 9), typeId: 'pla', weight: 0 }
     ];
 
-    let savedProfiles = [
-      { id: 'def1', name: 'Generic PLA', type: 'PLA', finish: 'Standard', price: 65, weight: 1000 },
-      { id: 'def2', name: 'Generic PETG', type: 'PETG', finish: 'Standard', price: 70, weight: 1000 }
-    ];
+    let simplifiedTime = {
+      hours: 0,
+      minutes: 0,
+      seconds: 0
+    };
+
+    let savedProfiles = [];
 
     let plates = [
       {
         id: Math.random().toString(36).substr(2, 9),
         name: 'Plate 1',
         baseHours: 0, baseMinutes: 0, baseSeconds: 0,
-        weightInputMode: 'simple', // 'simple' or 'detailed'
+        weightInputMode: 'simple',
         totalSlicerWeight: 0,
         modelWeight: 0, supportWeight: 0, flushedWeight: 0, towerWeight: 0,
         filaments: [
@@ -675,12 +710,12 @@
 
     const bizSettings = {
       postProcMins: 5,
-      postProcRate: 30, 
+      postProcRate: 30,
       failureRisk: 10,
       markup: 100
     };
 
-    let appMetrics = {}; // Store results globally for the Invoice
+    let appMetrics = {};
 
     // --- Helpers ---
     const formatCurrency = (val) => new Intl.NumberFormat('ms-MY', { style: 'currency', currency: 'MYR' }).format(val || 0);
@@ -709,11 +744,20 @@
       return null;
     };
 
-    // --- Dark Mode ---
+    const formatInvoiceId = (raw) => {
+      const val = (raw || '').trim();
+      if (!val) return '#INV';
+      const clean = val.replace(/^#+/, '').trim();
+      if (/^inv/i.test(clean)) {
+        return '#INV' + clean.slice(3);
+      }
+      return clean.startsWith('-') ? '#INV' + clean : '#INV-' + clean;
+    };
+
+    // --- Dark Mode (Light Mode Default) ---
     function initDarkMode() {
       const saved = localStorage.getItem('3dCalcDarkMode');
-      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-      if (saved === 'true' || (saved === null && prefersDark)) {
+      if (saved === 'true') {
         document.documentElement.classList.add('dark');
       }
     }
@@ -721,51 +765,52 @@
     function toggleDarkMode() {
       const isDark = document.documentElement.classList.toggle('dark');
       localStorage.setItem('3dCalcDarkMode', isDark ? 'true' : 'false');
-      lucide.createIcons();
     }
 
-    // --- Mode Switcher (Simplified vs Advanced) ---
+    // --- Calculator Mode Switcher ---
     function setCalcMode(mode) {
       calcMode = mode;
       const btnSimp = document.getElementById('btn-mode-simplified');
       const btnAdv = document.getElementById('btn-mode-advanced');
-      const simpInputs = document.getElementById('simplified-inputs-wrapper');
-      const advInputs = document.getElementById('advanced-inputs-wrapper');
-      const simpRows = document.getElementById('simplified-breakdown-rows');
-      const advRows = document.getElementById('advanced-breakdown-rows');
-      const advProfit = document.getElementById('advanced-profit-rows');
-      const cardWeight = document.getElementById('card-weight-waste');
-      const cardTime = document.getElementById('card-duration-analysis');
+      const wrapSimp = document.getElementById('simplified-inputs-wrapper');
+      const wrapAdv = document.getElementById('advanced-inputs-wrapper');
+      const rowsSimp = document.getElementById('simplified-breakdown-rows');
+      const rowsAdv = document.getElementById('advanced-breakdown-rows');
+      const profitAdv = document.getElementById('advanced-profit-rows');
+      const cardWaste = document.getElementById('card-weight-waste');
+      const cardDuration = document.getElementById('card-duration-analysis');
 
       if (mode === 'simplified') {
         btnSimp.className = 'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 bg-blue-600 text-white shadow-sm';
         btnAdv.className = 'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 text-slate-600 hover:bg-slate-100';
-        simpInputs.classList.remove('hidden');
-        advInputs.classList.add('hidden');
-        simpRows.classList.remove('hidden');
-        advRows.classList.add('hidden');
-        advProfit.classList.add('hidden');
-        cardWeight.classList.add('hidden');
-        cardTime.classList.add('hidden');
+        wrapSimp.classList.remove('hidden');
+        wrapAdv.classList.add('hidden');
+        rowsSimp.classList.remove('hidden');
+        rowsAdv.classList.add('hidden');
+        profitAdv.classList.add('hidden');
+        cardWaste.classList.add('hidden');
+        cardDuration.classList.add('hidden');
       } else {
         btnAdv.className = 'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 bg-blue-600 text-white shadow-sm';
         btnSimp.className = 'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 text-slate-600 hover:bg-slate-100';
-        simpInputs.classList.add('hidden');
-        advInputs.classList.remove('hidden');
-        simpRows.classList.add('hidden');
-        advRows.classList.remove('hidden');
-        advProfit.classList.remove('hidden');
-        cardWeight.classList.remove('hidden');
-        cardTime.classList.remove('hidden');
+        wrapAdv.classList.remove('hidden');
+        wrapSimp.classList.add('hidden');
+        rowsAdv.classList.remove('hidden');
+        rowsSimp.classList.add('hidden');
+        profitAdv.classList.remove('hidden');
+        cardWaste.classList.remove('hidden');
+        cardDuration.classList.remove('hidden');
       }
+
       updateMetrics();
       lucide.createIcons();
     }
 
-    // --- External JSON Loaders ---
+    // --- GitHub JSON Loaders ---
     async function loadExternalTypes() {
       const statusEl = document.getElementById('simplified-types-status');
-      if (statusEl) statusEl.innerText = 'Syncing filament types...';
+      if (statusEl) statusEl.innerText = 'Syncing filament types from GitHub...';
+
       try {
         const res = await fetch(`${EXTERNAL_TYPES_URL}?t=${Date.now()}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -773,20 +818,20 @@
         if (Array.isArray(data) && data.length > 0) {
           filamentTypes = data.map((item, idx) => ({
             id: item.id || `type_${idx}`,
-            type: item.type || item.name || `Type ${idx + 1}`,
+            type: item.type || item.name || `Material ${idx + 1}`,
             pricePerGram: Number(item.pricePerGram ?? item.price ?? 0)
           }));
           if (statusEl) statusEl.innerText = `Synced ${filamentTypes.length} filament types from GitHub.`;
-        } else {
-          if (statusEl) statusEl.innerText = 'Using built-in filament types.';
         }
       } catch (err) {
-        console.warn('Could not fetch filament_types.json, using defaults:', err);
-        if (statusEl) statusEl.innerText = 'Using built-in filament types (upload filament_types.json to GitHub to customize).';
+        console.warn('Using fallback filament types (filament_types.json not found or unreachable):', err);
+        if (statusEl) statusEl.innerText = 'Using built-in filament rates (upload filament_types.json to GitHub to customize).';
       }
+
       renderSimplifiedItems();
       renderTypesList();
       updateMetrics();
+      lucide.createIcons();
     }
 
     async function loadExternalProfiles() {
@@ -794,21 +839,23 @@
         const res = await fetch(`${EXTERNAL_PROFILES_URL}?t=${Date.now()}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          savedProfiles = data.map((item, idx) => ({
-            id: item.id || `prof_${idx}`,
-            name: item.name || `Profile ${idx + 1}`,
-            type: item.type || 'PLA',
-            finish: item.finish || 'Standard',
-            price: Number(item.price) || 0,
-            weight: Number(item.weight) || 1000
+        if (Array.isArray(data)) {
+          savedProfiles = data.map((p, idx) => ({
+            id: p.id || `cloud_${idx}`,
+            name: p.name || 'Unnamed Filament',
+            type: p.type || 'PLA',
+            finish: p.finish || 'Standard',
+            price: Number(p.price) || 0,
+            weight: Number(p.weight) || 1000
           }));
         }
       } catch (err) {
-        console.warn('Could not fetch filaments.json, using defaults:', err);
+        console.warn('Could not load filaments.json from GitHub:', err);
       }
+
       renderProfilesList();
       renderPlates();
+      lucide.createIcons();
     }
 
     // --- Simplified Mode Multi-Material Handlers ---
@@ -816,43 +863,39 @@
       const container = document.getElementById('simplified-items-container');
       if (!container) return;
 
-      container.innerHTML = simplifiedItems.map((item, index) => {
+      container.innerHTML = simplifiedItems.map((item, idx) => {
         const selectedType = filamentTypes.find(t => t.id === item.typeId) || filamentTypes[0];
+        if (selectedType && item.typeId !== selectedType.id) {
+          item.typeId = selectedType.id;
+        }
         const rate = selectedType ? Number(selectedType.pricePerGram) : 0;
         const lineSubtotal = (Number(item.weight) || 0) * rate;
 
         return `
           <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-xl flex flex-col sm:flex-row sm:items-center gap-3 relative group">
             <div class="flex items-center gap-2.5 flex-1">
-              <span class="w-6 h-6 rounded-full bg-blue-100 text-blue-700 font-bold text-xs flex items-center justify-center shrink-0">
-                ${index + 1}
-              </span>
+              <span class="w-6 h-6 rounded-full bg-blue-100 text-blue-700 font-black text-xs flex items-center justify-center shrink-0">${idx + 1}</span>
               <div class="flex-1">
-                <label class="text-[10px] font-bold text-slate-400 uppercase block mb-1">Filament Type</label>
-                <select onchange="updateSimplifiedItem('${item.id}', 'typeId', this.value)" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500">
-                  ${filamentTypes.map(t => `
-                    <option value="${t.id}" ${t.id === (selectedType ? selectedType.id : '') ? 'selected' : ''}>
-                      ${t.type} — RM ${Number(t.pricePerGram).toFixed(2)} / g
-                    </option>
-                  `).join('')}
+                <label class="text-[10px] font-bold text-slate-400 uppercase block mb-0.5">Filament Type</label>
+                <select onchange="updateSimplifiedItem('${item.id}', 'typeId', this.value)" class="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-800 outline-none focus:border-blue-500 cursor-pointer">
+                  ${filamentTypes.map(t => `<option value="${t.id}" ${t.id === item.typeId ? 'selected' : ''}>${t.type} — RM ${Number(t.pricePerGram).toFixed(2)} / g</option>`).join('')}
                 </select>
               </div>
             </div>
 
-            <div class="flex items-end gap-3 sm:w-64">
+            <div class="flex items-center gap-3 sm:w-56">
               <div class="flex-1">
-                <label class="text-[10px] font-bold text-blue-600 uppercase block mb-1">Weight (g)</label>
-                <input type="number" min="0" step="0.1" value="${item.weight || ''}" placeholder="0" oninput="updateSimplifiedItem('${item.id}', 'weight', this.value)" class="w-full px-3 py-2 bg-blue-50 border border-blue-200 text-blue-900 rounded-lg text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500">
+                <label class="text-[10px] font-bold text-blue-600 uppercase block mb-0.5">Weight (g)</label>
+                <input type="number" min="0" step="0.1" value="${item.weight || ''}" placeholder="0" oninput="updateSimplifiedItem('${item.id}', 'weight', this.value)" class="w-full px-3 py-1.5 bg-blue-50 border border-blue-200 text-blue-900 rounded-lg text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
-              <div class="text-right min-w-[85px] pb-1.5">
-                <span class="text-[9px] font-bold text-slate-400 uppercase block">Subtotal</span>
+              <div class="text-right min-w-[76px]">
+                <span class="text-[10px] font-bold text-slate-400 uppercase block mb-0.5">Subtotal</span>
                 <span id="simp-subtotal-${item.id}" class="text-sm font-black text-slate-800">${formatCurrency(lineSubtotal)}</span>
               </div>
               ${simplifiedItems.length > 1 ? `
-              <button onclick="removeSimplifiedItem('${item.id}')" class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition mb-0.5" title="Remove Material">
+              <button onclick="removeSimplifiedItem('${item.id}')" class="text-slate-400 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 transition self-end mb-0.5" title="Remove Material">
                 <i data-lucide="trash-2" class="w-4 h-4"></i>
-              </button>
-              ` : ''}
+              </button>` : ''}
             </div>
           </div>
         `;
@@ -862,7 +905,7 @@
     }
 
     function addSimplifiedItem() {
-      const defaultTypeId = filamentTypes[0] ? filamentTypes[0].id : 'pla';
+      const defaultTypeId = filamentTypes[0]?.id || 'pla';
       simplifiedItems.push({
         id: Math.random().toString(36).substr(2, 9),
         typeId: defaultTypeId,
@@ -895,6 +938,11 @@
       updateMetrics();
     }
 
+    function updateSimplifiedTime(field, value) {
+      simplifiedTime[field] = Math.max(0, parseInt(value, 10) || 0);
+      updateMetrics();
+    }
+
     // --- DOM Update Engine ---
     function updateMetrics() {
       const setInnerText = (id, text) => {
@@ -902,9 +950,14 @@
         if (el) el.innerText = text;
       };
 
+      let otherCost = 0;
+      otherMaterials.forEach(item => {
+        otherCost += ((Number(item.price) || 0) * (Number(item.quantity) || 0));
+      });
+
       if (calcMode === 'simplified') {
         let totalWeight = 0;
-        let totalPrice = 0;
+        let totalMaterialPrice = 0;
         const listContainer = document.getElementById('metric-simp-items-list');
         let listHTML = '';
 
@@ -916,7 +969,7 @@
           const lineCost = weight * rate;
 
           totalWeight += weight;
-          totalPrice += lineCost;
+          totalMaterialPrice += lineCost;
 
           listHTML += `
             <div class="flex justify-between items-center text-xs">
@@ -928,23 +981,27 @@
 
         if (listContainer) listContainer.innerHTML = listHTML;
 
+        const simpTotalMins = (Number(simplifiedTime.hours) * 60) + Number(simplifiedTime.minutes) + (Number(simplifiedTime.seconds) / 60);
+        const totalRetailPrice = totalMaterialPrice + otherCost;
         const firstType = filamentTypes.find(t => t.id === simplifiedItems[0]?.typeId) || filamentTypes[0];
-        const effectiveRate = totalWeight > 0 ? (totalPrice / totalWeight) : (firstType ? Number(firstType.pricePerGram) : 0);
+        const effectiveRate = totalWeight > 0 ? (totalMaterialPrice / totalWeight) : (firstType ? Number(firstType.pricePerGram) : 0);
 
-        setInnerText('metric-simp-count', `${simplifiedItems.length} ${simplifiedItems.length === 1 ? 'item' : 'items'}`);
         setInnerText('metric-simp-weight', `${Number(totalWeight.toFixed(2))} g`);
-        setInnerText('metric-recommended-price', formatCurrency(totalPrice));
-        setInnerText('metric-recommended-price-large', formatCurrency(totalPrice));
+        setInnerText('metric-simp-time', formatTime(simpTotalMins));
+        setInnerText('metric-simp-material-cost', formatCurrency(totalMaterialPrice));
+        setInnerText('metric-simp-other-cost', formatCurrency(otherCost));
+        setInnerText('metric-recommended-price', formatCurrency(totalRetailPrice));
+        setInnerText('metric-recommended-price-large', formatCurrency(totalRetailPrice));
         setInnerText('metric-retail-rate', `${formatCurrency(effectiveRate)} / g`);
 
         appMetrics = {
           mode: 'simplified',
-          totalBaseTimeMins: 0,
+          totalBaseTimeMins: simpTotalMins,
           grandSlicerWeight: totalWeight,
           postProcCost: 0,
-          retailFilamentTotalCost: totalPrice,
-          otherCost: 0,
-          recommendedPrice: totalPrice,
+          retailFilamentTotalCost: totalMaterialPrice,
+          otherCost: otherCost,
+          recommendedPrice: totalRetailPrice,
           retailRatePerGram: effectiveRate
         };
         return;
@@ -992,11 +1049,6 @@
           filamentCost += (pricePerGram * used);
           totalFilamentUsedWeight += used;
         });
-      });
-
-      let otherCost = 0;
-      otherMaterials.forEach(item => {
-        otherCost += ((Number(item.price) || 0) * (Number(item.quantity) || 0));
       });
 
       const postProcCost = ((Number(bizSettings.postProcMins) || 0) / 60) * (Number(bizSettings.postProcRate) || 0);
@@ -1501,16 +1553,36 @@
 
     // --- Invoice System Functions ---
     function openInvoiceModal() {
-      document.getElementById('invoice-id-display').innerText = document.getElementById('invoiceNumInput').value ? '#' + document.getElementById('invoiceNumInput').value : '#INV';
+      document.getElementById('invoice-id-display').innerText = formatInvoiceId(document.getElementById('invoiceNumInput').value);
       document.getElementById('invoice-client-display').innerText = document.getElementById('clientNameInput').value || '-';
       document.getElementById('invoice-project-display').innerText = document.getElementById('projectNameInput').value || '-';
 
       const today = new Date();
       document.getElementById('invoice-date-display').innerText = 'Date: ' + today.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 
+      const statsGrid = document.getElementById('invoice-stats-grid');
+      const postProcBox = document.getElementById('invoice-postproc-box');
+      const laborRow = document.getElementById('invoice-labor-row');
+
       document.getElementById('invoice-time-display').innerText = formatTime(appMetrics.totalBaseTimeMins);
-      document.getElementById('invoice-postproc-display').innerText = (calcMode === 'simplified' ? 0 : bizSettings.postProcMins) + 'm';
       document.getElementById('invoice-weight-display').innerText = Number((appMetrics.grandSlicerWeight || 0).toFixed(2)) + ' g';
+
+      if (calcMode === 'simplified') {
+        if (postProcBox) postProcBox.classList.add('hidden');
+        if (laborRow) laborRow.classList.add('hidden');
+        if (statsGrid) {
+          statsGrid.classList.remove('sm:grid-cols-4');
+          statsGrid.classList.add('sm:grid-cols-3');
+        }
+      } else {
+        if (postProcBox) postProcBox.classList.remove('hidden');
+        if (laborRow) laborRow.classList.remove('hidden');
+        if (statsGrid) {
+          statsGrid.classList.remove('sm:grid-cols-3');
+          statsGrid.classList.add('sm:grid-cols-4');
+        }
+        document.getElementById('invoice-postproc-display').innerText = bizSettings.postProcMins + 'm';
+      }
 
       const filamentTable = document.getElementById('invoice-filaments-rows');
       const partsSection = document.getElementById('invoice-parts-section');
@@ -1538,7 +1610,6 @@
         if (!filamentRowsHTML) {
           filamentRowsHTML = `<tr class="border-b border-slate-100 text-slate-400"><td colspan="2" class="p-2 py-3 italic">No material weight entered.</td></tr>`;
         }
-        if (partsSection) partsSection.classList.add('hidden');
       } else {
         plates.forEach(p => {
           p.filaments.forEach(f => {
@@ -1559,22 +1630,29 @@
         if (!filamentRowsHTML) {
           filamentRowsHTML = `<tr class="border-b border-slate-100 text-slate-400"><td colspan="2" class="p-2 py-3 italic">No filament usage recorded.</td></tr>`;
         }
-
-        if (partsSection) partsSection.classList.remove('hidden');
-        partsTable.innerHTML = '';
-        otherMaterials.forEach(m => {
-          const lineCost = (Number(m.price) || 0) * (Number(m.quantity) || 0);
-          const tr = document.createElement('tr');
-          tr.className = 'border-b border-slate-100 text-slate-800';
-          tr.innerHTML = `
-            <td class="p-2 py-3 font-medium">${m.name}</td>
-            <td class="p-2 py-3 text-right">${formatCurrency(m.price)}</td>
-            <td class="p-2 py-3 text-right font-semibold">${m.quantity}</td>
-            <td class="p-2 py-3 text-right font-bold text-slate-900">${formatCurrency(lineCost)}</td>
-          `;
-          partsTable.appendChild(tr);
-        });
       }
+
+      // Render Additional Hardware/Parts for both modes
+      if (partsSection) {
+        if (calcMode === 'simplified' && otherMaterials.length === 0) {
+          partsSection.classList.add('hidden');
+        } else {
+          partsSection.classList.remove('hidden');
+        }
+      }
+      partsTable.innerHTML = '';
+      otherMaterials.forEach(m => {
+        const lineCost = (Number(m.price) || 0) * (Number(m.quantity) || 0);
+        const tr = document.createElement('tr');
+        tr.className = 'border-b border-slate-100 text-slate-800';
+        tr.innerHTML = `
+          <td class="p-2 py-3 font-medium">${m.name}</td>
+          <td class="p-2 py-3 text-right">${formatCurrency(m.price)}</td>
+          <td class="p-2 py-3 text-right font-semibold">${m.quantity}</td>
+          <td class="p-2 py-3 text-right font-bold text-slate-900">${formatCurrency(lineCost)}</td>
+        `;
+        partsTable.appendChild(tr);
+      });
 
       filamentTable.innerHTML = filamentRowsHTML;
 
@@ -1669,7 +1747,7 @@
 
       // Bind Invoice Inputs live sync
       document.getElementById('invoiceNumInput').addEventListener('input', (e) => {
-        document.getElementById('invoice-id-display').innerText = e.target.value ? '#' + e.target.value : '#INV';
+        document.getElementById('invoice-id-display').innerText = formatInvoiceId(e.target.value);
       });
       document.getElementById('projectNameInput').addEventListener('input', (e) => {
         document.getElementById('invoice-project-display').innerText = e.target.value ? e.target.value : '-';

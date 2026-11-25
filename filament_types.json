@@ -1,6 +1,6 @@
 [
   { "id": "pla", "type": "PLA", "pricePerGram": 0.3 },
-  { "id": "plamatte", "type": "PLA Matte", "pricePerGram": 0.4 },
-  { "id": "plaplus", "type": "PLA+", "pricePerGram": 0.5 },
-  { "id": "petg", "type": "PETG", "pricePerGram": 0.6 }
+  { "id": "plamatte", "type": "PLA Matte", "pricePerGram": 0.35 },
+  { "id": "plaplus", "type": "PLA+", "pricePerGram": 0.4 },
+  { "id": "petg", "type": "PETG", "pricePerGram": 0.5 }
 ]
